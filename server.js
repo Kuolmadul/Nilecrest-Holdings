@@ -25,7 +25,14 @@ app.use('/api/shipments', require('./api/routes/shipments'));
 app.use('/api/trips',     require('./api/routes/trips'));
 app.use('/api/fuel',      require('./api/routes/fuel'));
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Nilecrest server running on http://localhost:${PORT}`);
-});
+// Export the app so Vercel can run it as a serverless function.
+module.exports = app;
+
+// Only start a persistent listener when run directly (local dev / npm run dev).
+// On Vercel, this file is required, not executed directly, so app.listen() is skipped.
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Nilecrest server running on http://localhost:${PORT}`);
+  });
+}
