@@ -24,6 +24,7 @@
     <a href="fleet.html">Fleet</a>
     <a href="contact.html">Contact</a>
   </div>
+  <button class="nav-toggle" id="navToggle" aria-label="Toggle menu"><span></span><span></span><span></span></button>
   <a href="quote.html"><button class="nav-cta">Get a Quote</button></a>
 </div>
 
@@ -140,5 +141,23 @@ function escapeHtml(str) {
 loadProjects();
 </script>
 
+<script>
+// Mobile nav toggle
+(function () {
+  var toggle = document.getElementById('navToggle');
+  var links = document.querySelector('.nav-links');
+  if (!toggle || !links) return;
+  toggle.addEventListener('click', function () {
+    toggle.classList.toggle('open');
+    links.classList.toggle('open');
+  });
+  links.querySelectorAll('a').forEach(function (link) {
+    link.addEventListener('click', function () {
+      toggle.classList.remove('open');
+      links.classList.remove('open');
+    });
+  });
+})();
+</script>
 </body>
 </html>
