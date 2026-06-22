@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoices | Nilecrest Admin</title>
+<link rel="icon" href="../assets/images/logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<div id="sidebarMount"></div>
+
+<div class="main-wrap">
+  <header class="topbar">
+    <button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="ti ti-menu-2"></i></button>
+    <div class="topbar-title">Invoices</div>
+    <div class="topbar-right">
+      <a href="../index.html" target="_blank" class="topbar-link"><i class="ti ti-external-link"></i> View Site</a>
+      <div class="topbar-notif"><i class="ti ti-bell"></i><span class="notif-dot"></span></div>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="page-heading">
+      <div>
+        <div class="page-title">Invoices</div>
+        <div class="page-sub">Track billing and payment status for client work.</div>
+      </div>
+      <button class="btn-primary" onclick="openModal()"><i class="ti ti-plus"></i> Create Invoice</button>
+    </div>
+
+    <div class="stats-row" style="margin-bottom:20px;">
+      <div class="stat-card"><div class="stat-icon orange"><i class="ti ti-alert-circle"></i></div><div class="stat-info"><div class="stat-val" id="cntUnpaid">-</div><div class="stat-lbl">Unpaid</div></div></div>
+      <div class="stat-card"><div class="stat-icon navy"><i class="ti ti-clock"></i></div><div class="stat-info"><div class="stat-val" id="cntPartial">-</div><div class="stat-lbl">Partially Paid</div></div></div>
+      <div class="stat-card"><div class="stat-icon green"><i class="ti ti-circle-check"></i></div><div class="stat-info"><div class="stat-val" id="cntPaid">-</div><div class="stat-lbl">Paid</div></div></div>
+      <div class="stat-card"><div class="stat-icon purple"><i class="ti ti-cash"></i></div><div class="stat-info"><div class="stat-val" id="cntTotalValue">-</div><div class="stat-lbl">Total Value</div></div></div>
+    </div>
+
+    <div class="card">
+      <div class="page-toolbar">
+        <input type="text" class="search-input" id="searchInput" placeholder="Search by invoice number or client...">
+        <select class="filter-select" id="statusFilter">
+          <option value="">All Statuses</option>
+          <option value="Unpaid">Unpaid</option>
+          <option value="Partial">Partial</option>
+          <option value="Paid">Paid</option>
+          <option value="Overdue">Overdue</option>
+        </select>
+      </div>
+      <div class="full-table-wrap">
+        <table class="full-table">
+          <thead><tr><th>Invoice #</th><th>Client</th><th>Amount</th><th>Paid</th><th>Due date</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="invoicesBody"><tr><td colspan="7" class="table-loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- CREATE/EDIT MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+<div class="modal" id="modal">
+  <div class="modal-head"><div class="modal-title" id="modalTitle">Create Invoice</div><button class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></button></div>
+  <div class="modal-body">
+    <input type="hidden" id="invoiceId">
+    <div class="form-group"><label class="form-label">Client Name</label><input type="text" class="form-input" id="fClientName" placeholder="e.g. Kenya Breweries Ltd"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Amount (KSh)</label><input type="number" class="form-input" id="fAmount" placeholder="0"></div>
+      <div class="form-group"><label class="form-label">Amount Paid (KSh)</label><input type="number" class="form-input" id="fAmountPaid" placeholder="0"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Due Date</label><input type="date" class="form-input" id="fDueDate"></div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-input" id="fStatus">
+          <option value="Unpaid">Unpaid</option><option value="Partial">Partial</option>
+          <option value="Paid">Paid</option><option value="Overdue">Overdue</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer"><button class="btn-outline" onclick="closeModal()">Cancel</button><button class="btn-primary" id="saveInvoiceBtn"><i class="ti ti-device-floppy"></i> Save Invoice</button></div>
+</div>
+
+<!-- DELETE REASON MODAL -->
+<div class="reason-modal-overlay" id="deleteOverlay" onclick="closeDeleteModal()"></div>
+<div class="reason-modal" id="deleteModal">
+  <div class="reason-modal-head"><div class="reason-modal-title">Delete invoice</div></div>
+  <div class="reason-modal-body">
+    <textarea id="deleteReasonInput" placeholder="Reason for deletion (required)"></textarea>
+    <div class="reason-error" id="deleteReasonError">A reason is required.</div>
+  </div>
+  <div class="reason-modal-footer"><button class="btn-outline" onclick="closeDeleteModal()">Cancel</button><button class="btn-primary" style="background:#ef4444;" id="confirmDeleteBtn">Delete invoice</button></div>
+</div>
+
+<style>
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; }
+.modal { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:12px; width:min(520px,95vw); z-index:201; box-shadow:0 20px 60px rgba(0,0,0,0.2); max-height:88vh; overflow-y:auto; }
+.modal-overlay.show, .modal.show { display:block; }
+.modal-head { display:flex; align-items:center; justify-content:space-between; padding:18px 20px 14px; border-bottom:0.5px solid #e2e6f0; }
+.modal-title { font-size:15px; font-weight:600; color:#1B2A5E; }
+.modal-close { background:none; border:none; font-size:18px; cursor:pointer; color:#94a3b8; }
+.modal-body { padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
+.modal-footer { padding:14px 20px; border-top:0.5px solid #e2e6f0; display:flex; justify-content:flex-end; gap:10px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.form-group { display:flex; flex-direction:column; gap:5px; }
+.form-label { font-size:11px; font-weight:600; color:#64748b; letter-spacing:0.5px; text-transform:uppercase; }
+.form-input { padding:8px 11px; border:0.5px solid #e2e6f0; border-radius:6px; font-size:13px; font-family:'Inter',sans-serif; color:#1e293b; outline:none; }
+.form-input:focus { border-color:#1B2A5E; }
+.btn-outline { padding:8px 16px; border:0.5px solid #e2e6f0; background:#fff; border-radius:6px; font-size:12.5px; font-weight:500; cursor:pointer; color:#64748b; }
+@media (max-width:480px) { .form-row { grid-template-columns:1fr; } }
+</style>
+
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/department-config.js"></script>
+<script src="../assets/js/sidebar.js"></script>
+<script>
+requireLogin();
+renderSidebar('invoices');
+applyDepartmentTheme();
+
+const statusPill = { Unpaid: 'pill-pending', Partial: 'pill-review', Paid: 'pill-won', Overdue: 'pill-lost' };
+let allInvoices = [];
+
+async function loadSummary() {
+  const s = await api('/invoices/summary');
+  document.getElementById('cntUnpaid').textContent = s.Unpaid;
+  document.getElementById('cntPartial').textContent = s.Partial;
+  document.getElementById('cntPaid').textContent = s.Paid;
+  document.getElementById('cntTotalValue').textContent = formatMoney(s.total_value);
+}
+
+async function loadInvoices() {
+  const body = document.getElementById('invoicesBody');
+  body.innerHTML = `<tr><td colspan="7" class="table-loading">Loading...</td></tr>`;
+  const status = document.getElementById('statusFilter').value;
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+
+  try {
+    const params = new URLSearchParams({ limit: 100 });
+    if (status) params.set('status', status);
+    const data = await api(`/invoices?${params.toString()}`);
+    allInvoices = data.rows;
+    let rows = allInvoices;
+    if (q) rows = rows.filter(i => i.invoice_number.toLowerCase().includes(q) || i.client_name.toLowerCase().includes(q));
+
+    body.innerHTML = rows.length ? rows.map(inv => `
+      <tr>
+        <td style="font-size:11px;color:var(--text-2);">${escapeHtml(inv.invoice_number)}</td>
+        <td><span style="font-weight:500;">${escapeHtml(inv.client_name)}</span></td>
+        <td>${formatMoney(inv.amount)}</td>
+        <td style="color:var(--text-2);">${formatMoney(inv.amount_paid)}</td>
+        <td style="color:var(--text-2);">${formatDate(inv.due_date)}</td>
+        <td><span class="pill ${statusPill[inv.status]}">${inv.status}</span></td>
+        <td><div class="action-btns">
+          <button class="action-btn" title="Edit" onclick="editInvoice(${inv.id})"><i class="ti ti-pencil"></i></button>
+          <button class="action-btn danger" title="Delete" onclick="askDeleteInvoice(${inv.id})"><i class="ti ti-trash"></i></button>
+        </div></td>
+      </tr>`).join('') : `<tr><td colspan="7" class="table-empty">No invoices match</td></tr>`;
+  } catch {
+    body.innerHTML = `<tr><td colspan="7" class="table-empty">Failed to load invoices</td></tr>`;
+  }
+}
+
+document.getElementById('searchInput').addEventListener('input', loadInvoices);
+document.getElementById('statusFilter').addEventListener('change', loadInvoices);
+
+function openModal() {
+  document.getElementById('modalTitle').textContent = 'Create Invoice';
+  document.getElementById('invoiceId').value = '';
+  ['fClientName','fAmount','fAmountPaid','fDueDate'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fStatus').value = 'Unpaid';
+  document.getElementById('modalOverlay').classList.add('show');
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+  document.getElementById('modal').classList.remove('show');
+}
+
+function editInvoice(id) {
+  const inv = allInvoices.find(i => i.id === id);
+  if (!inv) return;
+  document.getElementById('modalTitle').textContent = `Edit ${inv.invoice_number}`;
+  document.getElementById('invoiceId').value = inv.id;
+  document.getElementById('fClientName').value = inv.client_name;
+  document.getElementById('fAmount').value = inv.amount;
+  document.getElementById('fAmountPaid').value = inv.amount_paid;
+  document.getElementById('fDueDate').value = inv.due_date ? inv.due_date.split('T')[0] : '';
+  document.getElementById('fStatus').value = inv.status;
+  document.getElementById('modalOverlay').classList.add('show');
+  document.getElementById('modal').classList.add('show');
+}
+
+document.getElementById('saveInvoiceBtn').addEventListener('click', async () => {
+  const id = document.getElementById('invoiceId').value;
+  try {
+    if (id) {
+      await api(`/invoices/${id}`, { method: 'PUT', body: JSON.stringify({
+        amount_paid: document.getElementById('fAmountPaid').value,
+        status: document.getElementById('fStatus').value,
+        due_date: document.getElementById('fDueDate').value || null,
+      })});
+    } else {
+      await api('/invoices', { method: 'POST', body: JSON.stringify({
+        client_name: document.getElementById('fClientName').value,
+        amount: document.getElementById('fAmount').value,
+        due_date: document.getElementById('fDueDate').value || null,
+        status: document.getElementById('fStatus').value,
+      })});
+    }
+    closeModal();
+    loadInvoices();
+    loadSummary();
+  } catch (err) { alert(err.message); }
+});
+
+let pendingDeleteId = null;
+function askDeleteInvoice(id) {
+  pendingDeleteId = id;
+  document.getElementById('deleteReasonInput').value = '';
+  document.getElementById('deleteReasonError').style.display = 'none';
+  document.getElementById('deleteOverlay').classList.add('show');
+  document.getElementById('deleteModal').classList.add('show');
+}
+function closeDeleteModal() {
+  document.getElementById('deleteOverlay').classList.remove('show');
+  document.getElementById('deleteModal').classList.remove('show');
+}
+document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+  const reason = document.getElementById('deleteReasonInput').value.trim();
+  if (!reason) { document.getElementById('deleteReasonError').style.display = 'block'; return; }
+  try {
+    await api(`/invoices/${pendingDeleteId}`, { method: 'DELETE', body: JSON.stringify({ reason }) });
+    closeDeleteModal();
+    loadInvoices();
+    loadSummary();
+  } catch (err) { alert(err.message); }
+});
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
+}
+
+loadSummary();
+loadInvoices();
+</script>
+</body>
+</html>

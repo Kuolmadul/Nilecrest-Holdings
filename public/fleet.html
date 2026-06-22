@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Our Fleet | Nilecrest Holdings</title>
+<link rel="icon" href="assets/images/logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<div class="nav">
+  <a href="index.html" class="nav-logo-link">
+    <img src="assets/images/logo.png" class="nav-logo-img" alt="Nilecrest Holdings - Logistics, Transport, Construction">
+  </a>
+  <div class="nav-links">
+    <a href="about.html">About</a>
+    <a href="services.html">Services</a>
+    <a href="projects.html">Projects</a>
+    <a href="fleet.html" class="active">Fleet</a>
+    <a href="contact.html">Contact</a>
+  </div>
+  <a href="quote.html"><button class="nav-cta">Get a Quote</button></a>
+</div>
+
+<div class="page-header">
+  <img src="assets/images/watermark-light.png" class="page-header-watermark" alt="">
+  <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span class="current">Fleet</span></div>
+  <h1>A fleet built for <em>East Africa's roads</em></h1>
+  <p>Trucks, buses, and heavy equipment, tracked and maintained for reliable delivery every time.</p>
+</div>
+
+<div class="section">
+  <div class="fleet-summary-row" id="fleetSummaryRow">
+    <div class="fleet-summary-card"><div class="fleet-summary-num" id="sumActive">-</div><div class="fleet-summary-lbl">Active / On Road</div></div>
+    <div class="fleet-summary-card"><div class="fleet-summary-num" id="sumMaint">-</div><div class="fleet-summary-lbl">In Maintenance</div></div>
+    <div class="fleet-summary-card"><div class="fleet-summary-num" id="sumStandby">-</div><div class="fleet-summary-lbl">Standby</div></div>
+    <div class="fleet-summary-card"><div class="fleet-summary-num" id="sumTotal">-</div><div class="fleet-summary-lbl">Total Fleet</div></div>
+  </div>
+
+  <div class="filter-bar" id="filterBar">
+    <button class="filter-chip active" data-status="">All Vehicles</button>
+    <button class="filter-chip" data-status="active">Active</button>
+    <button class="filter-chip" data-status="maintenance">In Maintenance</button>
+    <button class="filter-chip" data-status="standby">Standby</button>
+  </div>
+
+  <div class="public-fleet-grid" id="fleetGrid">
+    <div class="public-loading-state">Loading fleet...</div>
+  </div>
+
+  <div style="text-align:center;margin-top:20px;" id="loadMoreWrap">
+    <button class="cta-o" id="loadMoreBtn" style="display:none;">Load More Vehicles</button>
+    <div style="font-size:11.5px;color:#94a3b8;margin-top:8px;" id="loadMoreInfo"></div>
+  </div>
+</div>
+
+<div class="cta-band">
+  <h2>Need vehicles for your next job?</h2>
+  <p>Reach out and we'll match you with the right equipment and crew.</p>
+  <div class="cta-btns">
+    <a href="quote.html"><button class="cta-o">Get a Quote &#8599;</button></a>
+    <a href="tel:+254110500712"><button class="cta-w"><i class="ti ti-phone" aria-hidden="true"></i> +254 11 0500712</button></a>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="footer-top">
+    <div>
+      <div class="footer-brand">NILE<em>CREST</em> HOLDINGS</div>
+      <div class="footer-tagline">Logistics &middot; Transport &middot; Construction<br>Delivering excellence across East Africa.</div>
+      <div class="footer-contacts">
+        <div class="footer-contact"><i class="ti ti-phone" aria-hidden="true"></i> +254 11 0500712</div>
+        <div class="footer-contact"><i class="ti ti-mail" aria-hidden="true"></i> Nilecrest@gmail.com</div>
+        <div class="footer-contact"><i class="ti ti-map-pin" aria-hidden="true"></i> Nairobi Kenya, PO BOX 0,00100</div>
+      </div>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Services</div>
+      <a href="services.html">Logistics &amp; Freight</a>
+      <a href="services.html">Transport Solutions</a>
+      <a href="services.html">Civil Construction</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Company</div>
+      <a href="about.html">About Us</a>
+      <a href="projects.html">Projects</a>
+      <a href="fleet.html">Fleet</a>
+      <a href="contact.html">Contact</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">&copy; 2026 Nilecrest Holdings Ltd. All rights reserved.</div>
+    <a href="https://wa.me/254110500712" target="_blank"><button class="wa-btn"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i> WhatsApp Us</button></a>
+  </div>
+</div>
+
+<script>
+const statusLabel = { active: 'Active', maintenance: 'In Maintenance', standby: 'Standby', out_of_service: 'Out of Service' };
+const typeIcon = { 'Heavy Truck': 'ti-truck', 'Tipper Truck': 'ti-truck', 'Staff Bus': 'ti-bus', 'Excavator': 'ti-building-factory', 'Grader': 'ti-bulldozer' };
+
+const PAGE_SIZE = 6;
+let currentStatus = '';
+let loadedVehicles = [];
+let currentPage = 1;
+let totalCount = 0;
+
+async function loadSummary() {
+  try {
+    const res = await fetch('/api/fleet/summary-public');
+    if (!res.ok) throw new Error('fallback');
+    const s = await res.json();
+    applySummary(s);
+  } catch {
+    // Public summary endpoint not available -- skip silently, counts stay blank.
+  }
+}
+
+function applySummary(s) {
+  document.getElementById('sumActive').textContent = s.active ?? '-';
+  document.getElementById('sumMaint').textContent = s.maintenance ?? '-';
+  document.getElementById('sumStandby').textContent = s.standby ?? '-';
+  document.getElementById('sumTotal').textContent = s.total ?? '-';
+}
+
+function renderVehicleCard(v) {
+  const icon = typeIcon[v.vehicle_type] || 'ti-truck';
+  return `
+    <div class="public-fleet-card">
+      <div class="public-fleet-icon"><i class="ti ${icon}" aria-hidden="true"></i></div>
+      <div class="public-fleet-type">${escapeHtml(v.vehicle_type || 'Vehicle')}</div>
+      <div class="public-fleet-dept">${escapeHtml(v.department_name || '')}</div>
+      <span class="public-fleet-status ${v.status}"><span class="public-fleet-status-dot"></span> ${statusLabel[v.status] || v.status}</span>
+    </div>`;
+}
+
+async function loadFleet(reset) {
+  const grid = document.getElementById('fleetGrid');
+  if (reset) { currentPage = 1; loadedVehicles = []; grid.innerHTML = '<div class="public-loading-state">Loading fleet...</div>'; }
+
+  try {
+    const params = new URLSearchParams({ page: currentPage, limit: PAGE_SIZE });
+    if (currentStatus) params.set('status', currentStatus);
+    const res = await fetch(`/api/fleet/public?${params.toString()}`);
+    const data = await res.json();
+    totalCount = data.total || 0;
+    loadedVehicles = reset ? (data.rows || []) : loadedVehicles.concat(data.rows || []);
+
+    grid.innerHTML = loadedVehicles.length
+      ? loadedVehicles.map(renderVehicleCard).join('')
+      : '<div class="public-empty-state">No vehicles match this filter right now.</div>';
+
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    const info = document.getElementById('loadMoreInfo');
+    if (loadedVehicles.length) {
+      info.textContent = `Showing ${loadedVehicles.length} of ${totalCount} vehicles`;
+      loadMoreBtn.style.display = loadedVehicles.length < totalCount ? 'inline-flex' : 'none';
+    } else {
+      info.textContent = '';
+      loadMoreBtn.style.display = 'none';
+    }
+  } catch {
+    grid.innerHTML = '<div class="public-empty-state">Unable to load the fleet right now. Please try again shortly.</div>';
+  }
+}
+
+document.getElementById('loadMoreBtn').addEventListener('click', () => {
+  currentPage += 1;
+  loadFleet(false);
+});
+
+document.getElementById('filterBar').addEventListener('click', (e) => {
+  const btn = e.target.closest('.filter-chip');
+  if (!btn) return;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  currentStatus = btn.dataset.status;
+  loadFleet(true);
+});
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
+}
+
+loadSummary();
+loadFleet(true);
+</script>
+
+</body>
+</html>

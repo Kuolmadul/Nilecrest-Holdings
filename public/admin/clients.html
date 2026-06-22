@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clients | Nilecrest Admin</title>
+<link rel="icon" href="../assets/images/logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<div id="sidebarMount"></div>
+
+<div class="main-wrap">
+  <header class="topbar">
+    <button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="ti ti-menu-2"></i></button>
+    <div class="topbar-title">Clients</div>
+    <div class="topbar-right">
+      <a href="../index.html" target="_blank" class="topbar-link"><i class="ti ti-external-link"></i> View Site</a>
+      <div class="topbar-notif"><i class="ti ti-bell"></i><span class="notif-dot"></span></div>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="page-heading">
+      <div>
+        <div class="page-title">Clients</div>
+        <div class="page-sub">Everyone who has submitted a quote or has an active project with Nilecrest.</div>
+      </div>
+    </div>
+
+    <div class="stats-row" style="margin-bottom:20px;">
+      <div class="stat-card"><div class="stat-icon navy"><i class="ti ti-users"></i></div><div class="stat-info"><div class="stat-val" id="cntTotal">-</div><div class="stat-lbl">Total Clients</div></div></div>
+      <div class="stat-card"><div class="stat-icon green"><i class="ti ti-building-skyscraper"></i></div><div class="stat-info"><div class="stat-val" id="cntWithProjects">-</div><div class="stat-lbl">With Active Projects</div></div></div>
+      <div class="stat-card"><div class="stat-icon orange"><i class="ti ti-file-text"></i></div><div class="stat-info"><div class="stat-val" id="cntWithQuotes">-</div><div class="stat-lbl">With Quotes on File</div></div></div>
+    </div>
+
+    <div class="card">
+      <div class="page-toolbar">
+        <input type="text" class="search-input" id="searchInput" placeholder="Search by name, company, or email...">
+      </div>
+      <div class="full-table-wrap">
+        <table class="full-table">
+          <thead><tr><th>Name</th><th>Company</th><th>Email</th><th>Phone</th><th>Projects</th><th>Quotes</th><th>Joined</th><th>Actions</th></tr></thead>
+          <tbody id="clientsBody"><tr><td colspan="8" class="table-loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- VIEW CLIENT MODAL -->
+<div class="modal-overlay" id="viewOverlay" onclick="closeViewModal()"></div>
+<div class="modal" id="viewModal" style="width:min(640px,95vw);">
+  <div class="modal-head"><div class="modal-title">Client details</div><button class="modal-close" onclick="closeViewModal()"><i class="ti ti-x"></i></button></div>
+  <div class="modal-body" id="viewModalBody"></div>
+  <div class="modal-footer"><button class="btn-outline" onclick="closeViewModal()">Close</button></div>
+</div>
+
+<style>
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; }
+.modal { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:12px; width:min(560px,95vw); z-index:201; box-shadow:0 20px 60px rgba(0,0,0,0.2); max-height:88vh; overflow-y:auto; }
+.modal-overlay.show, .modal.show { display:block; }
+.modal-head { display:flex; align-items:center; justify-content:space-between; padding:18px 20px 14px; border-bottom:0.5px solid #e2e6f0; }
+.modal-title { font-size:15px; font-weight:600; color:#1B2A5E; }
+.modal-close { background:none; border:none; font-size:18px; cursor:pointer; color:#94a3b8; }
+.modal-body { padding:18px 20px; }
+.modal-footer { padding:14px 20px; border-top:0.5px solid #e2e6f0; display:flex; justify-content:flex-end; gap:10px; }
+.btn-outline { padding:8px 16px; border:0.5px solid #e2e6f0; background:#fff; border-radius:6px; font-size:12.5px; font-weight:500; cursor:pointer; color:#64748b; }
+.client-subtable { width:100%; border-collapse:collapse; margin-top:8px; }
+.client-subtable th { text-align:left; font-size:10px; font-weight:600; letter-spacing:0.6px; text-transform:uppercase; color:#94a3b8; padding:0 10px 8px; border-bottom:0.5px solid #e2e6f0; }
+.client-subtable td { padding:8px 10px; font-size:12.5px; border-bottom:0.5px solid #e2e6f0; }
+</style>
+
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/department-config.js"></script>
+<script src="../assets/js/sidebar.js"></script>
+<script>
+requireLogin();
+renderSidebar('clients');
+applyDepartmentTheme();
+
+const statusPillQ = { Pending: 'pill-pending', 'In Review': 'pill-review', Won: 'pill-won', Lost: 'pill-lost' };
+const statusPillP = { ongoing: 'pill-review', completed: 'pill-won', planned: 'pill-pending', on_hold: 'pill-lost' };
+let allClients = [];
+
+async function loadClients() {
+  const body = document.getElementById('clientsBody');
+  body.innerHTML = `<tr><td colspan="8" class="table-loading">Loading...</td></tr>`;
+  try {
+    const data = await api('/clients');
+    allClients = data.rows;
+    renderClients(allClients);
+
+    document.getElementById('cntTotal').textContent = allClients.length;
+    document.getElementById('cntWithProjects').textContent = allClients.filter(c => Number(c.project_count) > 0).length;
+    document.getElementById('cntWithQuotes').textContent = allClients.filter(c => Number(c.quote_count) > 0).length;
+  } catch {
+    body.innerHTML = `<tr><td colspan="8" class="table-empty">Failed to load clients</td></tr>`;
+  }
+}
+
+function renderClients(rows) {
+  const body = document.getElementById('clientsBody');
+  body.innerHTML = rows.length ? rows.map(c => `
+    <tr>
+      <td><span style="font-weight:500;">${escapeHtml(c.name)}</span></td>
+      <td>${escapeHtml(c.company || '-')}</td>
+      <td style="color:var(--text-2);">${escapeHtml(c.email)}</td>
+      <td style="color:var(--text-2);">${escapeHtml(c.phone || '-')}</td>
+      <td>${c.project_count}</td>
+      <td>${c.quote_count}</td>
+      <td style="color:var(--text-2);">${formatDate(c.created_at)}</td>
+      <td><div class="action-btns">
+        <button class="action-btn" title="View" onclick="viewClient(${c.id})"><i class="ti ti-eye"></i></button>
+      </div></td>
+    </tr>`).join('') : `<tr><td colspan="8" class="table-empty">No clients match</td></tr>`;
+}
+
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  const q = e.target.value.trim().toLowerCase();
+  const filtered = q
+    ? allClients.filter(c => c.name.toLowerCase().includes(q) || (c.company || '').toLowerCase().includes(q) || c.email.toLowerCase().includes(q))
+    : allClients;
+  renderClients(filtered);
+});
+
+async function viewClient(id) {
+  const { client, projects, quotes } = await api(`/clients/${id}`);
+  document.getElementById('viewModalBody').innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-field"><div class="detail-label">Name</div><div class="detail-value">${escapeHtml(client.name)}</div></div>
+      <div class="detail-field"><div class="detail-label">Company</div><div class="detail-value">${escapeHtml(client.company || '-')}</div></div>
+      <div class="detail-field"><div class="detail-label">Email</div><div class="detail-value">${escapeHtml(client.email)}</div></div>
+      <div class="detail-field"><div class="detail-label">Phone</div><div class="detail-value">${escapeHtml(client.phone || '-')}</div></div>
+    </div>
+    <div class="detail-label" style="margin-bottom:6px;">Projects (${projects.length})</div>
+    ${projects.length ? `<table class="client-subtable"><thead><tr><th>Title</th><th>Status</th><th>Progress</th></tr></thead><tbody>
+      ${projects.map(p => `<tr><td>${escapeHtml(p.title)}</td><td><span class="pill ${statusPillP[p.status]}">${p.status}</span></td><td>${p.progress_pct}%</td></tr>`).join('')}
+    </tbody></table>` : '<div class="table-empty">No projects yet</div>'}
+    <div class="detail-label" style="margin:14px 0 6px;">Quotes (${quotes.length})</div>
+    ${quotes.length ? `<table class="client-subtable"><thead><tr><th>Ref #</th><th>Service</th><th>Status</th></tr></thead><tbody>
+      ${quotes.map(q => `<tr><td>${escapeHtml(q.ref_number)}</td><td>${escapeHtml(q.service_type)}</td><td><span class="pill ${statusPillQ[q.status]}">${q.status}</span></td></tr>`).join('')}
+    </tbody></table>` : '<div class="table-empty">No quotes yet</div>'}
+  `;
+  document.getElementById('viewOverlay').classList.add('show');
+  document.getElementById('viewModal').classList.add('show');
+}
+function closeViewModal() {
+  document.getElementById('viewOverlay').classList.remove('show');
+  document.getElementById('viewModal').classList.remove('show');
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
+}
+
+loadClients();
+</script>
+</body>
+</html>

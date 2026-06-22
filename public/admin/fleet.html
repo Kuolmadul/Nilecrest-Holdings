@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fleet | Nilecrest Admin</title>
+<link rel="icon" href="../assets/images/logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<div id="sidebarMount"></div>
+
+<div class="main-wrap">
+  <header class="topbar">
+    <button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="ti ti-menu-2"></i></button>
+    <div class="topbar-title">Fleet Management</div>
+    <div class="topbar-right">
+      <a href="../index.html" target="_blank" class="topbar-link"><i class="ti ti-external-link"></i> View Site</a>
+      <div class="topbar-notif"><i class="ti ti-bell"></i><span class="notif-dot"></span></div>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="page-heading">
+      <div>
+        <div class="page-title">Fleet Registry</div>
+        <div class="page-sub">Track all vehicles and equipment in the Nilecrest fleet.</div>
+      </div>
+      <button class="btn-primary" onclick="openModal()"><i class="ti ti-plus"></i> Add Vehicle</button>
+    </div>
+
+    <div class="stats-row" style="margin-bottom:20px;">
+      <div class="stat-card"><div class="stat-icon green"><i class="ti ti-circle-check"></i></div><div class="stat-info"><div class="stat-val" id="cntActive">-</div><div class="stat-lbl">Active / On Road</div></div></div>
+      <div class="stat-card"><div class="stat-icon orange"><i class="ti ti-tool"></i></div><div class="stat-info"><div class="stat-val" id="cntMaint">-</div><div class="stat-lbl">In Maintenance</div></div></div>
+      <div class="stat-card"><div class="stat-icon navy"><i class="ti ti-clock-pause"></i></div><div class="stat-info"><div class="stat-val" id="cntStandby">-</div><div class="stat-lbl">Standby / Idle</div></div></div>
+      <div class="stat-card"><div class="stat-icon purple"><i class="ti ti-truck"></i></div><div class="stat-info"><div class="stat-val" id="cntTotal">-</div><div class="stat-lbl">Total Vehicles</div></div></div>
+    </div>
+
+    <div class="fleet-grid" id="fleetGrid">
+      <div class="table-loading">Loading fleet...</div>
+    </div>
+
+    <div style="text-align:center;margin-top:16px;">
+      <button class="btn-primary" id="loadMoreBtn" style="display:inline-flex;background:var(--navy);">Load More Vehicles</button>
+      <div id="loadMoreInfo" style="font-size:11.5px;color:var(--text-3);margin-top:8px;"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ADD / EDIT VEHICLE MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+<div class="modal" id="modal">
+  <div class="modal-head">
+    <div class="modal-title" id="modalTitle">Add Vehicle / Equipment</div>
+    <button class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="vehicleId">
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Registration / ID</label><input type="text" class="form-input" id="fReg" placeholder="e.g. KDA 123A"></div>
+      <div class="form-group">
+        <label class="form-label">Vehicle Type</label>
+        <select class="form-input" id="fType">
+          <option>Heavy Truck</option><option>Tipper Truck</option><option>Staff Bus</option>
+          <option>Pickup / Van</option><option>Excavator</option><option>Grader</option><option>Other Equipment</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Make &amp; Model</label><input type="text" class="form-input" id="fMakeModel" placeholder="e.g. Hino 500"></div>
+      <div class="form-group"><label class="form-label">Assigned Driver</label><input type="text" class="form-input" id="fDriver" placeholder="Full name"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-input" id="fStatus">
+          <option value="active">Active</option><option value="maintenance">Maintenance</option>
+          <option value="standby">Standby</option><option value="out_of_service">Out of Service</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Current Location / Assignment</label><input type="text" class="form-input" id="fLocation" placeholder="e.g. Nairobi to Kampala"></div>
+    </div>
+    <div class="form-group" id="specFieldsContainer" style="display:contents;"></div>
+    <div class="form-group" id="editReasonGroup" style="display:none;">
+      <label class="form-label">Reason for change</label>
+      <textarea class="form-input" id="fEditReason" rows="2" placeholder="Why is this record being edited?"></textarea>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-outline" onclick="closeModal()">Cancel</button>
+    <button class="btn-primary" id="saveVehicleBtn"><i class="ti ti-device-floppy"></i> Save Vehicle</button>
+  </div>
+</div>
+
+<!-- VIEW VEHICLE MODAL -->
+<div class="modal-overlay" id="viewOverlay" onclick="closeViewModal()"></div>
+<div class="modal" id="viewModal" style="width:min(560px,95vw);">
+  <div class="modal-head"><div class="modal-title">Vehicle details</div><button class="modal-close" onclick="closeViewModal()"><i class="ti ti-x"></i></button></div>
+  <div class="modal-body" id="viewModalBody"></div>
+  <div class="modal-footer"><button class="btn-outline" onclick="closeViewModal()">Close</button></div>
+</div>
+
+<!-- DELETE REASON MODAL -->
+<div class="reason-modal-overlay" id="deleteOverlay" onclick="closeDeleteModal()"></div>
+<div class="reason-modal" id="deleteModal">
+  <div class="reason-modal-head"><div class="reason-modal-title">Remove vehicle</div></div>
+  <div class="reason-modal-body">
+    <p style="font-size:12.5px;color:var(--text-2);margin-bottom:10px;">This removes the vehicle from the registry view. The record stays in the database, marked as deleted, for audit purposes.</p>
+    <textarea id="deleteReasonInput" placeholder="Reason for removal (required)"></textarea>
+    <div class="reason-error" id="deleteReasonError">A reason is required.</div>
+  </div>
+  <div class="reason-modal-footer">
+    <button class="btn-outline" onclick="closeDeleteModal()">Cancel</button>
+    <button class="btn-primary" style="background:#ef4444;" id="confirmDeleteBtn">Remove vehicle</button>
+  </div>
+</div>
+
+<style>
+.fleet-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.vehicle-card { background:#fff; border:0.5px solid #e2e6f0; border-radius:10px; padding:16px; display:flex; flex-direction:column; gap:10px; }
+.vehicle-head { display:flex; align-items:center; justify-content:space-between; }
+.vehicle-icon { width:36px; height:36px; border-radius:8px; background:rgba(27,42,94,0.08); display:flex; align-items:center; justify-content:center; font-size:18px; color:#1B2A5E; }
+.vehicle-reg { font-size:16px; font-weight:700; color:#1B2A5E; letter-spacing:0.5px; }
+.vehicle-type { font-size:12px; color:#64748b; margin-top:-6px; }
+.vehicle-detail { display:flex; align-items:center; gap:6px; font-size:12px; color:#64748b; }
+.vehicle-detail i { font-size:13px; color:#E85C1A; }
+.vehicle-actions { display:flex; gap:6px; margin-top:4px; }
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; }
+.modal { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:12px; width:min(540px,95vw); z-index:201; box-shadow:0 20px 60px rgba(0,0,0,0.2); max-height:88vh; overflow-y:auto; }
+.modal-overlay.show, .modal.show { display:block; }
+.modal-head { display:flex; align-items:center; justify-content:space-between; padding:18px 20px 14px; border-bottom:0.5px solid #e2e6f0; }
+.modal-title { font-size:15px; font-weight:600; color:#1B2A5E; }
+.modal-close { background:none; border:none; font-size:18px; cursor:pointer; color:#94a3b8; }
+.modal-body { padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
+.modal-footer { padding:14px 20px; border-top:0.5px solid #e2e6f0; display:flex; justify-content:flex-end; gap:10px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.form-group { display:flex; flex-direction:column; gap:5px; }
+.form-label { font-size:11px; font-weight:600; color:#64748b; letter-spacing:0.5px; text-transform:uppercase; }
+.form-input { padding:8px 11px; border:0.5px solid #e2e6f0; border-radius:6px; font-size:13px; font-family:'Inter',sans-serif; color:#1e293b; outline:none; }
+.form-input:focus { border-color:#1B2A5E; }
+.btn-outline { padding:8px 16px; border:0.5px solid #e2e6f0; background:#fff; border-radius:6px; font-size:12.5px; font-weight:500; cursor:pointer; color:#64748b; }
+@media (max-width:760px) { .fleet-grid { grid-template-columns:1fr 1fr; } }
+@media (max-width:480px) { .fleet-grid { grid-template-columns:1fr; } .form-row { grid-template-columns:1fr; } }
+</style>
+
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/department-config.js"></script>
+<script src="../assets/js/sidebar.js"></script>
+<script>
+requireLogin();
+renderSidebar('fleet');
+applyDepartmentTheme();
+const deptCfg = getDepartmentConfig();
+document.querySelector('.topbar-title').textContent = `${deptCfg.fleetLabel} Management`;
+document.querySelector('.page-title').textContent = `${deptCfg.fleetLabel} Registry`;
+document.querySelector('.page-sub').textContent = `Track all ${deptCfg.fleetLabel.toLowerCase()} in the Nilecrest ${deptCfg.label} department.`;
+document.querySelector('[onclick="openModal()"]').innerHTML = `<i class="ti ti-plus"></i> Add ${deptCfg.fleetLabel.replace(/s$/, '')}`;
+
+const statusPill = { active: 'pill-won', maintenance: 'pill-pending', standby: 'pill-review', out_of_service: 'pill-lost' };
+const statusLabel = { active: 'Active', maintenance: 'Maintenance', standby: 'Standby', out_of_service: 'Out of Service' };
+const typeIcon = { 'Heavy Truck': 'ti-truck', 'Tipper Truck': 'ti-truck', 'Staff Bus': 'ti-bus', 'Excavator': 'ti-building-factory', 'Grader': 'ti-bulldozer' };
+
+const PAGE_SIZE = 6;
+let loadedVehicles = [];
+let currentPage = 1;
+let totalCount = 0;
+
+async function refreshCounts() {
+  const s = await api('/fleet/summary');
+  document.getElementById('cntActive').textContent = s.active;
+  document.getElementById('cntMaint').textContent = s.maintenance;
+  document.getElementById('cntStandby').textContent = s.standby;
+  document.getElementById('cntTotal').textContent = s.total;
+}
+
+function renderVehicleCard(v) {
+  const icon = typeIcon[v.vehicle_type] || 'ti-truck';
+  return `
+    <div class="vehicle-card" data-id="${v.id}">
+      <div class="vehicle-head">
+        <div class="vehicle-icon"><i class="ti ${icon}"></i></div>
+        <span class="pill ${statusPill[v.status]}">${statusLabel[v.status]}</span>
+      </div>
+      <div class="vehicle-reg">${escapeHtml(v.reg_number)}</div>
+      <div class="vehicle-type">${escapeHtml(v.vehicle_type || '')} ${v.make_model ? '&mdash; ' + escapeHtml(v.make_model) : ''}</div>
+      <div class="vehicle-detail"><i class="ti ti-user"></i> ${escapeHtml(v.assigned_driver || 'Unassigned')}</div>
+      <div class="vehicle-detail"><i class="ti ti-map-pin"></i> ${escapeHtml(v.current_location || '-')}</div>
+      <div class="vehicle-actions">
+        <button class="action-btn" title="View" onclick="viewVehicle(${v.id})"><i class="ti ti-eye"></i></button>
+        <button class="action-btn" title="Edit" onclick="editVehicle(${v.id})"><i class="ti ti-pencil"></i></button>
+        <button class="action-btn danger" title="Remove" onclick="askDeleteVehicle(${v.id})"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`;
+}
+
+async function loadFleet(reset) {
+  const grid = document.getElementById('fleetGrid');
+  if (reset) { currentPage = 1; loadedVehicles = []; grid.innerHTML = `<div class="table-loading">Loading fleet...</div>`; }
+
+  try {
+    const data = await api(`/fleet?page=${currentPage}&limit=${PAGE_SIZE}`);
+    totalCount = data.total;
+    loadedVehicles = reset ? data.rows : loadedVehicles.concat(data.rows);
+
+    grid.innerHTML = loadedVehicles.length
+      ? loadedVehicles.map(renderVehicleCard).join('')
+      : `<div class="table-empty">No vehicles in the fleet yet</div>`;
+
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    const info = document.getElementById('loadMoreInfo');
+    info.textContent = `Showing ${loadedVehicles.length} of ${totalCount} vehicles`;
+    loadMoreBtn.style.display = loadedVehicles.length < totalCount ? 'inline-flex' : 'none';
+  } catch (err) {
+    grid.innerHTML = `<div class="table-empty">Failed to load fleet</div>`;
+  }
+}
+
+document.getElementById('loadMoreBtn').addEventListener('click', () => {
+  currentPage += 1;
+  loadFleet(false);
+});
+
+// ---------- ADD / EDIT MODAL ----------
+function renderSpecFields(values) {
+  values = values || {};
+  const container = document.getElementById('specFieldsContainer');
+  container.innerHTML = deptCfg.fleetFields.map(f => `
+    <div class="form-group">
+      <label class="form-label">${escapeHtml(f.label)}</label>
+      <input type="${f.type}" class="form-input spec-input" data-key="${f.key}" placeholder="${f.placeholder || ''}" value="${escapeHtml(values[f.key] ?? '')}">
+    </div>`).join('');
+}
+function collectSpecValues() {
+  const specs = {};
+  document.querySelectorAll('.spec-input').forEach(el => { if (el.value) specs[el.dataset.key] = el.value; });
+  return specs;
+}
+
+function openModal() {
+  document.getElementById('modalTitle').textContent = `Add ${deptCfg.fleetLabel.replace(/s$/, '')}`;
+  document.getElementById('vehicleId').value = '';
+  document.getElementById('editReasonGroup').style.display = 'none';
+  ['fReg','fMakeModel','fDriver','fLocation'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fType').value = 'Heavy Truck';
+  document.getElementById('fStatus').value = 'standby';
+  renderSpecFields();
+  document.getElementById('modalOverlay').classList.add('show');
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+  document.getElementById('modal').classList.remove('show');
+}
+
+async function editVehicle(id) {
+  const { vehicle } = await api(`/fleet/${id}`);
+  document.getElementById('modalTitle').textContent = `Edit ${vehicle.reg_number}`;
+  document.getElementById('vehicleId').value = vehicle.id;
+  document.getElementById('fReg').value = vehicle.reg_number;
+  document.getElementById('fReg').disabled = true;
+  document.getElementById('fType').value = vehicle.vehicle_type || 'Heavy Truck';
+  document.getElementById('fMakeModel').value = vehicle.make_model || '';
+  document.getElementById('fDriver').value = vehicle.assigned_driver || '';
+  document.getElementById('fStatus').value = vehicle.status;
+  document.getElementById('fLocation').value = vehicle.current_location || '';
+  renderSpecFields(vehicle.specs);
+  document.getElementById('editReasonGroup').style.display = '';
+  document.getElementById('fEditReason').value = '';
+  document.getElementById('modalOverlay').classList.add('show');
+  document.getElementById('modal').classList.add('show');
+}
+
+document.getElementById('saveVehicleBtn').addEventListener('click', async () => {
+  const id = document.getElementById('vehicleId').value;
+  const payload = {
+    vehicle_type: document.getElementById('fType').value,
+    make_model: document.getElementById('fMakeModel').value,
+    assigned_driver: document.getElementById('fDriver').value,
+    status: document.getElementById('fStatus').value,
+    current_location: document.getElementById('fLocation').value,
+    specs: collectSpecValues(),
+  };
+  try {
+    if (id) {
+      payload.reason = document.getElementById('fEditReason').value;
+      await api(`/fleet/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+    } else {
+      payload.reg_number = document.getElementById('fReg').value;
+      await api('/fleet', { method: 'POST', body: JSON.stringify(payload) });
+    }
+    document.getElementById('fReg').disabled = false;
+    closeModal();
+    loadFleet(true);
+    refreshCounts();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+// ---------- VIEW ----------
+async function viewVehicle(id) {
+  const { vehicle, history } = await api(`/fleet/${id}`);
+  document.getElementById('viewModalBody').innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-field"><div class="detail-label">Registration</div><div class="detail-value">${escapeHtml(vehicle.reg_number)}</div></div>
+      <div class="detail-field"><div class="detail-label">Status</div><div class="detail-value"><span class="pill ${statusPill[vehicle.status]}">${statusLabel[vehicle.status]}</span></div></div>
+      <div class="detail-field"><div class="detail-label">Type</div><div class="detail-value">${escapeHtml(vehicle.vehicle_type || '-')}</div></div>
+      <div class="detail-field"><div class="detail-label">Make &amp; model</div><div class="detail-value">${escapeHtml(vehicle.make_model || '-')}</div></div>
+      <div class="detail-field"><div class="detail-label">Driver</div><div class="detail-value">${escapeHtml(vehicle.assigned_driver || 'Unassigned')}</div></div>
+      <div class="detail-field"><div class="detail-label">Location</div><div class="detail-value">${escapeHtml(vehicle.current_location || '-')}</div></div>
+      ${deptCfg.fleetFields.map(f => `<div class="detail-field"><div class="detail-label">${escapeHtml(f.label)}</div><div class="detail-value">${escapeHtml((vehicle.specs || {})[f.key] || '-')}</div></div>`).join('')}
+    </div>
+    <div class="detail-label" style="margin-bottom:8px;">History</div>
+    ${history.length ? history.map(h => `
+      <div class="history-item">
+        <div class="history-dot"></div>
+        <div class="history-body">
+          <div class="history-action">${h.action} ${h.changed_by_name ? `by ${escapeHtml(h.changed_by_name)}` : ''}</div>
+          <div class="history-meta">${timeAgo(h.created_at)}</div>
+          ${h.reason ? `<div class="history-reason">"${escapeHtml(h.reason)}"</div>` : ''}
+        </div>
+      </div>`).join('') : '<div class="table-empty">No history yet</div>'}
+  `;
+  document.getElementById('viewOverlay').classList.add('show');
+  document.getElementById('viewModal').classList.add('show');
+}
+function closeViewModal() {
+  document.getElementById('viewOverlay').classList.remove('show');
+  document.getElementById('viewModal').classList.remove('show');
+}
+
+// ---------- DELETE WITH REASON ----------
+let pendingDeleteId = null;
+function askDeleteVehicle(id) {
+  pendingDeleteId = id;
+  document.getElementById('deleteReasonInput').value = '';
+  document.getElementById('deleteReasonError').style.display = 'none';
+  document.getElementById('deleteOverlay').classList.add('show');
+  document.getElementById('deleteModal').classList.add('show');
+}
+function closeDeleteModal() {
+  document.getElementById('deleteOverlay').classList.remove('show');
+  document.getElementById('deleteModal').classList.remove('show');
+}
+document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+  const reason = document.getElementById('deleteReasonInput').value.trim();
+  if (!reason) { document.getElementById('deleteReasonError').style.display = 'block'; return; }
+  try {
+    await api(`/fleet/${pendingDeleteId}`, { method: 'DELETE', body: JSON.stringify({ reason }) });
+    closeDeleteModal();
+    loadFleet(true);
+    refreshCounts();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
+}
+
+refreshCounts();
+loadFleet(true);
+
+// Real-time refresh: counts and grid re-sync every 15s so multi-admin changes show up live
+setInterval(() => { refreshCounts(); }, 15000);
+</script>
+</body>
+</html>

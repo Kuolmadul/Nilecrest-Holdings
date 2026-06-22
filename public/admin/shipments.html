@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shipments | Nilecrest Admin</title>
+<link rel="icon" href="../assets/images/logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<div id="sidebarMount"></div>
+
+<div class="main-wrap">
+  <header class="topbar">
+    <button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="ti ti-menu-2"></i></button>
+    <div class="topbar-title">Shipments</div>
+    <div class="topbar-right">
+      <a href="../index.html" target="_blank" class="topbar-link"><i class="ti ti-external-link"></i> View Site</a>
+      <div class="topbar-notif"><i class="ti ti-bell"></i><span class="notif-dot"></span></div>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="page-heading">
+      <div>
+        <div class="page-title">Shipments</div>
+        <div class="page-sub">Track every delivery job from pickup to proof-of-delivery.</div>
+      </div>
+      <button class="btn-primary" onclick="openModal()"><i class="ti ti-plus"></i> New Shipment</button>
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="stats-row" style="margin-bottom:20px;">
+      <div class="stat-card"><div class="stat-icon orange"><i class="ti ti-clock"></i></div><div class="stat-info"><div class="stat-val" id="cntPending">-</div><div class="stat-lbl">Pending</div></div></div>
+      <div class="stat-card"><div class="stat-icon navy"><i class="ti ti-truck"></i></div><div class="stat-info"><div class="stat-val" id="cntTransit">-</div><div class="stat-lbl">In Transit</div></div></div>
+      <div class="stat-card"><div class="stat-icon green"><i class="ti ti-circle-check"></i></div><div class="stat-info"><div class="stat-val" id="cntDelivered">-</div><div class="stat-lbl">Delivered</div></div></div>
+      <div class="stat-card"><div class="stat-icon purple"><i class="ti ti-package"></i></div><div class="stat-info"><div class="stat-val" id="cntTotal">-</div><div class="stat-lbl">Total</div></div></div>
+    </div>
+
+    <div class="card">
+      <div class="page-toolbar">
+        <input type="text" class="search-input" id="searchInput" placeholder="Search by ref, client, route...">
+        <select class="filter-select" id="statusFilter">
+          <option value="">All Statuses</option>
+          <option value="Pending">Pending</option>
+          <option value="Loading">Loading</option>
+          <option value="In Transit">In Transit</option>
+          <option value="At Border">At Border</option>
+          <option value="Delivered">Delivered</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+      </div>
+      <div class="full-table-wrap">
+        <table class="full-table">
+          <thead><tr><th>Ref</th><th>Client</th><th>Route</th><th>Cargo</th><th>Truck</th><th>Departure</th><th>ETA</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="shipmentsBody"><tr><td colspan="9" class="table-loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0 4px;">
+        <div id="paginationInfo" style="font-size:11.5px;color:var(--text-3);"></div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn-outline" id="prevBtn" onclick="changePage(-1)">&#8592; Prev</button>
+          <button class="btn-outline" id="nextBtn" onclick="changePage(1)">Next &#8594;</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+<div class="modal" id="modal" style="width:min(620px,96vw);">
+  <div class="modal-head">
+    <div class="modal-title" id="modalTitle">New Shipment</div>
+    <button class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="shipmentId">
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Client Name</label><input type="text" class="form-input" id="fClientName" placeholder="e.g. Safaricom PLC"></div>
+      <div class="form-group"><label class="form-label">Cargo Type</label><input type="text" class="form-input" id="fCargoType" placeholder="e.g. General Goods, Machinery"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Origin</label><input type="text" class="form-input" id="fOrigin" placeholder="e.g. Nairobi, Kenya"></div>
+      <div class="form-group"><label class="form-label">Destination</label><input type="text" class="form-input" id="fDestination" placeholder="e.g. Kampala, Uganda"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Weight (tons)</label><input type="number" step="0.01" class="form-input" id="fWeight" placeholder="e.g. 15.5"></div>
+      <div class="form-group"><label class="form-label">Volume (CBM)</label><input type="number" step="0.01" class="form-input" id="fVolume" placeholder="e.g. 30"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Assigned Driver</label><input type="text" class="form-input" id="fDriver" placeholder="Driver full name"></div>
+      <div class="form-group"><label class="form-label">Truck (Fleet ID)</label><input type="number" class="form-input" id="fFleetId" placeholder="e.g. 3"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Departure Date</label><input type="date" class="form-input" id="fDeparture"></div>
+      <div class="form-group"><label class="form-label">Expected Delivery</label><input type="date" class="form-input" id="fETA"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-input" id="fStatus">
+          <option value="Pending">Pending</option>
+          <option value="Loading">Loading</option>
+          <option value="In Transit">In Transit</option>
+          <option value="At Border">At Border</option>
+          <option value="Delivered">Delivered</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+      </div>
+      <div class="form-group" style="justify-content:flex-end;padding-bottom:4px;">
+        <label class="form-label" style="margin-bottom:8px;">Border Clearance Required</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+          <input type="checkbox" id="fBorderClearance" style="width:15px;height:15px;"> Yes, this shipment crosses a border
+        </label>
+      </div>
+    </div>
+    <div class="form-group" id="podGroup" style="display:none;">
+      <label class="form-label">Proof of Delivery</label>
+      <textarea class="form-input" id="fPOD" rows="2" placeholder="Signature name, reference number, or delivery note number"></textarea>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="fNotes" rows="2" placeholder="Any customs notes, cargo requirements, etc."></textarea></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-outline" onclick="closeModal()">Cancel</button>
+    <button class="btn-primary" id="saveBtn"><i class="ti ti-device-floppy"></i> Save Shipment</button>
+  </div>
+</div>
+
+<!-- VIEW MODAL -->
+<div class="modal-overlay" id="viewOverlay" onclick="closeView()"></div>
+<div class="modal" id="viewModal" style="width:min(560px,96vw);">
+  <div class="modal-head"><div class="modal-title">Shipment Details</div><button class="modal-close" onclick="closeView()"><i class="ti ti-x"></i></button></div>
+  <div class="modal-body" id="viewBody"></div>
+  <div class="modal-footer"><button class="btn-outline" onclick="closeView()">Close</button></div>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="reason-modal-overlay" id="deleteOverlay" onclick="closeDelete()"></div>
+<div class="reason-modal" id="deleteModal">
+  <div class="reason-modal-head"><div class="reason-modal-title">Cancel / Remove Shipment</div></div>
+  <div class="reason-modal-body">
+    <p style="font-size:12.5px;color:var(--text-2);margin-bottom:10px;">The shipment record is retained in the database for audit. Only the listing view is cleared.</p>
+    <textarea id="deleteReason" placeholder="Reason for removal (required)"></textarea>
+    <div class="reason-error" id="deleteReasonError">A reason is required.</div>
+  </div>
+  <div class="reason-modal-footer">
+    <button class="btn-outline" onclick="closeDelete()">Cancel</button>
+    <button class="btn-primary" style="background:#ef4444;" id="confirmDeleteBtn">Remove</button>
+  </div>
+</div>
+
+<style>
+.modal-overlay,.reason-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;}
+.modal,.reason-modal{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:12px;z-index:201;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-height:90vh;overflow-y:auto;}
+.modal-overlay.show,.modal.show,.reason-modal-overlay.show,.reason-modal.show{display:block;}
+.modal-head,.reason-modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:0.5px solid #e2e6f0;}
+.modal-title,.reason-modal-title{font-size:15px;font-weight:600;color:#1B2A5E;}
+.modal-close{background:none;border:none;font-size:18px;cursor:pointer;color:#94a3b8;}
+.modal-body,.reason-modal-body{padding:18px 20px;display:flex;flex-direction:column;gap:14px;}
+.modal-footer,.reason-modal-footer{padding:14px 20px;border-top:0.5px solid #e2e6f0;display:flex;justify-content:flex-end;gap:10px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-label{font-size:11px;font-weight:600;color:#64748b;letter-spacing:0.5px;text-transform:uppercase;}
+.form-input{padding:8px 11px;border:0.5px solid #e2e6f0;border-radius:6px;font-size:13px;font-family:'Inter',sans-serif;color:#1e293b;outline:none;}
+.form-input:focus{border-color:#1B2A5E;}
+.btn-outline{padding:8px 16px;border:0.5px solid #e2e6f0;background:#fff;border-radius:6px;font-size:12.5px;font-weight:500;cursor:pointer;color:#64748b;}
+.reason-modal{width:min(440px,95vw);}
+.reason-modal-body textarea{width:100%;box-sizing:border-box;min-height:80px;padding:8px;border:0.5px solid #e2e6f0;border-radius:6px;font-family:'Inter',sans-serif;font-size:13px;resize:vertical;outline:none;}
+.reason-error{font-size:11.5px;color:#ef4444;display:none;margin-top:4px;}
+.detail-row{display:flex;gap:8px;font-size:13px;padding:5px 0;border-bottom:0.5px solid #f1f5f9;}
+.detail-row:last-child{border-bottom:none;}
+.detail-lbl{font-weight:600;color:#64748b;min-width:140px;}
+.detail-val{color:#1e293b;}
+@media(max-width:520px){.form-row{grid-template-columns:1fr;}}
+</style>
+
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/department-config.js"></script>
+<script src="../assets/js/sidebar.js"></script>
+<script>
+requireLogin();
+renderSidebar('shipments');
+applyDepartmentTheme();
+
+const statusPill = {
+  'Pending':    'pill-pending',
+  'Loading':    'pill-review',
+  'In Transit': 'pill-review',
+  'At Border':  'pill-pending',
+  'Delivered':  'pill-won',
+  'Cancelled':  'pill-lost'
+};
+
+let currentPage = 1;
+const PAGE_SIZE = 10;
+let totalCount = 0;
+
+async function loadSummary() {
+  try {
+    const s = await api('/shipments/summary');
+    document.getElementById('cntPending').textContent  = s['Pending'] || 0;
+    document.getElementById('cntTransit').textContent  = (s['In Transit'] || 0) + (s['Loading'] || 0) + (s['At Border'] || 0);
+    document.getElementById('cntDelivered').textContent = s['Delivered'] || 0;
+    document.getElementById('cntTotal').textContent     = s.total || 0;
+  } catch {}
+}
+
+async function loadShipments() {
+  const body = document.getElementById('shipmentsBody');
+  body.innerHTML = `<tr><td colspan="9" class="table-loading">Loading...</td></tr>`;
+  const status = document.getElementById('statusFilter').value;
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  try {
+    const params = new URLSearchParams({ page: currentPage, limit: PAGE_SIZE });
+    if (status) params.set('status', status);
+    const data = await api(`/shipments?${params}`);
+    totalCount = data.total;
+    let rows = data.rows;
+    if (q) rows = rows.filter(s =>
+      (s.shipment_ref || '').toLowerCase().includes(q) ||
+      (s.client_name || '').toLowerCase().includes(q) ||
+      (s.origin || '').toLowerCase().includes(q) ||
+      (s.destination || '').toLowerCase().includes(q) ||
+      (s.cargo_type || '').toLowerCase().includes(q)
+    );
+
+    body.innerHTML = rows.length ? rows.map(s => `
+      <tr>
+        <td><span style="font-weight:600;font-size:11.5px;color:#1B2A5E;">${escapeHtml(s.shipment_ref)}</span></td>
+        <td>${escapeHtml(s.client_name)}</td>
+        <td style="font-size:12px;">${escapeHtml(s.origin)} → ${escapeHtml(s.destination)}</td>
+        <td style="color:var(--text-2);font-size:12px;">${escapeHtml(s.cargo_type || '-')}${s.weight_tons ? ' · ' + s.weight_tons + 't' : ''}</td>
+        <td style="font-size:12px;">${escapeHtml(s.truck_reg || '-')}</td>
+        <td style="color:var(--text-2);font-size:12px;">${s.departure_date ? fmtDate(s.departure_date) : '-'}</td>
+        <td style="color:var(--text-2);font-size:12px;">${s.expected_delivery ? fmtDate(s.expected_delivery) : '-'}</td>
+        <td><span class="pill ${statusPill[s.status] || 'pill-pending'}">${escapeHtml(s.status)}</span></td>
+        <td><div class="action-btns">
+          <button class="action-btn" title="View" onclick="viewShipment(${s.id})"><i class="ti ti-eye"></i></button>
+          <button class="action-btn" title="Edit" onclick="editShipment(${s.id})"><i class="ti ti-pencil"></i></button>
+          <button class="action-btn danger" title="Remove" onclick="askDelete(${s.id})"><i class="ti ti-trash"></i></button>
+        </div></td>
+      </tr>`).join('') : `<tr><td colspan="9" class="table-empty">No shipments match</td></tr>`;
+
+    const start = (currentPage - 1) * PAGE_SIZE + 1;
+    const end   = Math.min(currentPage * PAGE_SIZE, totalCount);
+    document.getElementById('paginationInfo').textContent = totalCount ? `Showing ${start}–${end} of ${totalCount}` : '';
+    document.getElementById('prevBtn').disabled = currentPage <= 1;
+    document.getElementById('nextBtn').disabled = currentPage * PAGE_SIZE >= totalCount;
+  } catch {
+    body.innerHTML = `<tr><td colspan="9" class="table-empty">Failed to load shipments</td></tr>`;
+  }
+}
+
+function changePage(dir) { currentPage = Math.max(1, currentPage + dir); loadShipments(); }
+
+document.getElementById('searchInput').addEventListener('input', () => { currentPage = 1; loadShipments(); });
+document.getElementById('statusFilter').addEventListener('change', () => { currentPage = 1; loadShipments(); });
+
+// Show POD field when status = Delivered
+document.getElementById('fStatus').addEventListener('change', () => {
+  document.getElementById('podGroup').style.display = document.getElementById('fStatus').value === 'Delivered' ? 'flex' : 'none';
+});
+
+function openModal() {
+  document.getElementById('modalTitle').textContent = 'New Shipment';
+  document.getElementById('shipmentId').value = '';
+  ['fClientName','fCargoType','fOrigin','fDestination','fDriver','fNotes','fPOD'].forEach(id => document.getElementById(id).value = '');
+  ['fWeight','fVolume','fFleetId'].forEach(id => document.getElementById(id).value = '');
+  ['fDeparture','fETA'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fStatus').value = 'Pending';
+  document.getElementById('fBorderClearance').checked = false;
+  document.getElementById('podGroup').style.display = 'none';
+  document.getElementById('modalOverlay').classList.add('show');
+  document.getElementById('modal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+  document.getElementById('modal').classList.remove('show');
+}
+
+async function editShipment(id) {
+  const s = await api(`/shipments/${id}`);
+  document.getElementById('modalTitle').textContent = `Edit ${s.shipment_ref}`;
+  document.getElementById('shipmentId').value = s.id;
+  document.getElementById('fClientName').value = s.client_name || '';
+  document.getElementById('fCargoType').value  = s.cargo_type || '';
+  document.getElementById('fOrigin').value     = s.origin || '';
+  document.getElementById('fDestination').value = s.destination || '';
+  document.getElementById('fWeight').value     = s.weight_tons || '';
+  document.getElementById('fVolume').value     = s.volume_cbm || '';
+  document.getElementById('fDriver').value     = s.assigned_driver || '';
+  document.getElementById('fFleetId').value    = s.fleet_id || '';
+  document.getElementById('fDeparture').value  = s.departure_date ? s.departure_date.slice(0,10) : '';
+  document.getElementById('fETA').value        = s.expected_delivery ? s.expected_delivery.slice(0,10) : '';
+  document.getElementById('fStatus').value     = s.status;
+  document.getElementById('fBorderClearance').checked = s.border_clearance;
+  document.getElementById('fPOD').value        = s.proof_of_delivery || '';
+  document.getElementById('fNotes').value      = s.notes || '';
+  document.getElementById('podGroup').style.display = s.status === 'Delivered' ? 'flex' : 'none';
+  document.getElementById('modalOverlay').classList.add('show');
+  document.getElementById('modal').classList.add('show');
+}
+
+document.getElementById('saveBtn').addEventListener('click', async () => {
+  const id = document.getElementById('shipmentId').value;
+  const payload = {
+    client_name:       document.getElementById('fClientName').value,
+    cargo_type:        document.getElementById('fCargoType').value,
+    origin:            document.getElementById('fOrigin').value,
+    destination:       document.getElementById('fDestination').value,
+    weight_tons:       parseFloat(document.getElementById('fWeight').value) || null,
+    volume_cbm:        parseFloat(document.getElementById('fVolume').value) || null,
+    assigned_driver:   document.getElementById('fDriver').value,
+    fleet_id:          parseInt(document.getElementById('fFleetId').value) || null,
+    departure_date:    document.getElementById('fDeparture').value || null,
+    expected_delivery: document.getElementById('fETA').value || null,
+    status:            document.getElementById('fStatus').value,
+    border_clearance:  document.getElementById('fBorderClearance').checked,
+    proof_of_delivery: document.getElementById('fPOD').value,
+    notes:             document.getElementById('fNotes').value,
+  };
+  if (!payload.client_name || !payload.origin || !payload.destination) {
+    alert('Client name, origin and destination are required.'); return;
+  }
+  try {
+    if (id) await api(`/shipments/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+    else     await api('/shipments', { method: 'POST', body: JSON.stringify(payload) });
+    closeModal();
+    loadShipments();
+    loadSummary();
+  } catch (err) { alert(err.message); }
+});
+
+async function viewShipment(id) {
+  const s = await api(`/shipments/${id}`);
+  const fields = [
+    ['Ref',            s.shipment_ref],
+    ['Client',         s.client_name],
+    ['Origin',         s.origin],
+    ['Destination',    s.destination],
+    ['Cargo',          s.cargo_type || '-'],
+    ['Weight',         s.weight_tons ? s.weight_tons + ' tons' : '-'],
+    ['Volume',         s.volume_cbm ? s.volume_cbm + ' CBM' : '-'],
+    ['Truck',          s.truck_reg ? `${s.truck_reg} (${s.truck_model || ''})` : '-'],
+    ['Driver',         s.assigned_driver || '-'],
+    ['Departure',      s.departure_date ? fmtDate(s.departure_date) : '-'],
+    ['Expected ETA',   s.expected_delivery ? fmtDate(s.expected_delivery) : '-'],
+    ['Actual Delivery',s.actual_delivery ? fmtDate(s.actual_delivery) : '-'],
+    ['Status',         s.status],
+    ['Border Clearance', s.border_clearance ? 'Yes' : 'No'],
+    ['Proof of Delivery', s.proof_of_delivery || '-'],
+    ['Notes',          s.notes || '-'],
+  ];
+  document.getElementById('viewBody').innerHTML = fields.map(([l, v]) =>
+    `<div class="detail-row"><span class="detail-lbl">${l}</span><span class="detail-val">${escapeHtml(String(v))}</span></div>`
+  ).join('');
+  document.getElementById('viewOverlay').classList.add('show');
+  document.getElementById('viewModal').classList.add('show');
+}
+
+function closeView() {
+  document.getElementById('viewOverlay').classList.remove('show');
+  document.getElementById('viewModal').classList.remove('show');
+}
+
+let pendingDeleteId = null;
+function askDelete(id) {
+  pendingDeleteId = id;
+  document.getElementById('deleteReason').value = '';
+  document.getElementById('deleteReasonError').style.display = 'none';
+  document.getElementById('deleteOverlay').classList.add('show');
+  document.getElementById('deleteModal').classList.add('show');
+}
+function closeDelete() {
+  document.getElementById('deleteOverlay').classList.remove('show');
+  document.getElementById('deleteModal').classList.remove('show');
+}
+document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+  const reason = document.getElementById('deleteReason').value.trim();
+  if (!reason) { document.getElementById('deleteReasonError').style.display = 'block'; return; }
+  try {
+    await api(`/shipments/${pendingDeleteId}`, { method: 'DELETE', body: JSON.stringify({ reason }) });
+    closeDelete();
+    loadShipments();
+    loadSummary();
+  } catch (err) { alert(err.message); }
+});
+
+function fmtDate(d) {
+  if (!d) return '-';
+  return new Date(d).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' });
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
+}
+
+loadSummary();
+loadShipments();
+</script>
+</body>
+</html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Our Projects | Nilecrest Holdings</title>
+<link rel="icon" href="assets/images/logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<div class="nav">
+  <a href="index.html" class="nav-logo-link">
+    <img src="assets/images/logo.png" class="nav-logo-img" alt="Nilecrest Holdings - Logistics, Transport, Construction">
+  </a>
+  <div class="nav-links">
+    <a href="about.html">About</a>
+    <a href="services.html">Services</a>
+    <a href="projects.html" class="active">Projects</a>
+    <a href="fleet.html">Fleet</a>
+    <a href="contact.html">Contact</a>
+  </div>
+  <a href="quote.html"><button class="nav-cta">Get a Quote</button></a>
+</div>
+
+<div class="page-header">
+  <img src="assets/images/watermark-light.png" class="page-header-watermark" alt="">
+  <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span class="current">Projects</span></div>
+  <h1>Projects across <em>three pillars</em></h1>
+  <p>A live look at what Nilecrest is building, hauling, and delivering right now across Construction, Transportation, and Logistics.</p>
+</div>
+
+<div class="section">
+  <div class="filter-bar" id="filterBar">
+    <button class="filter-chip active" data-status="">All Projects</button>
+    <button class="filter-chip" data-status="ongoing">Ongoing</button>
+    <button class="filter-chip" data-status="completed">Completed</button>
+    <button class="filter-chip" data-status="planned">Planned</button>
+  </div>
+
+  <div class="public-projects-grid" id="projectsGrid">
+    <div class="public-loading-state">Loading projects...</div>
+  </div>
+</div>
+
+<div class="cta-band">
+  <h2>Have a project in mind?</h2>
+  <p>Tell us what you need and our team will get back to you within 24 hours.</p>
+  <div class="cta-btns">
+    <a href="quote.html"><button class="cta-o">Get a Quote &#8599;</button></a>
+    <a href="tel:+254110500712"><button class="cta-w"><i class="ti ti-phone" aria-hidden="true"></i> +254 11 0500712</button></a>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="footer-top">
+    <div>
+      <div class="footer-brand">NILE<em>CREST</em> HOLDINGS</div>
+      <div class="footer-tagline">Logistics &middot; Transport &middot; Construction<br>Delivering excellence across East Africa.</div>
+      <div class="footer-contacts">
+        <div class="footer-contact"><i class="ti ti-phone" aria-hidden="true"></i> +254 11 0500712</div>
+        <div class="footer-contact"><i class="ti ti-mail" aria-hidden="true"></i> Nilecrest@gmail.com</div>
+        <div class="footer-contact"><i class="ti ti-map-pin" aria-hidden="true"></i> Nairobi Kenya, PO BOX 0,00100</div>
+      </div>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Services</div>
+      <a href="services.html">Logistics &amp; Freight</a>
+      <a href="services.html">Transport Solutions</a>
+      <a href="services.html">Civil Construction</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Company</div>
+      <a href="about.html">About Us</a>
+      <a href="projects.html">Projects</a>
+      <a href="fleet.html">Fleet</a>
+      <a href="contact.html">Contact</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">&copy; 2026 Nilecrest Holdings Ltd. All rights reserved.</div>
+    <a href="https://wa.me/254110500712" target="_blank"><button class="wa-btn"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i> WhatsApp Us</button></a>
+  </div>
+</div>
+
+<script>
+const statusLabel = { ongoing: 'Ongoing', completed: 'Completed', planned: 'Planned', on_hold: 'On hold' };
+let currentStatus = '';
+
+async function loadProjects() {
+  const grid = document.getElementById('projectsGrid');
+  grid.innerHTML = '<div class="public-loading-state">Loading projects...</div>';
+  try {
+    const params = currentStatus ? `?status=${currentStatus}` : '';
+    const res = await fetch(`/api/projects${params}`);
+    const data = await res.json();
+    const rows = data.rows || [];
+
+    if (!rows.length) {
+      grid.innerHTML = '<div class="public-empty-state">No projects to show yet. Check back soon.</div>';
+      return;
+    }
+
+    grid.innerHTML = rows.map(p => `
+      <div class="public-proj-card">
+        <div class="public-proj-top">
+          <span class="public-proj-dept">${escapeHtml(p.department_name || 'Nilecrest')}</span>
+          <span class="public-proj-status ${p.status}">${statusLabel[p.status] || p.status}</span>
+        </div>
+        <div class="public-proj-title">${escapeHtml(p.title)}</div>
+        <div class="public-proj-loc"><i class="ti ti-map-pin" aria-hidden="true"></i> ${escapeHtml(p.location || 'Kenya')}</div>
+        ${p.description ? `<div class="public-proj-desc">${escapeHtml(p.description)}</div>` : ''}
+        <div class="public-progress-track"><div class="public-progress-fill" style="width:${p.progress_pct}%"></div></div>
+        <div class="public-progress-label">${p.progress_pct}% complete</div>
+      </div>`).join('');
+  } catch {
+    grid.innerHTML = '<div class="public-empty-state">Unable to load projects right now. Please try again shortly.</div>';
+  }
+}
+
+document.getElementById('filterBar').addEventListener('click', (e) => {
+  const btn = e.target.closest('.filter-chip');
+  if (!btn) return;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  currentStatus = btn.dataset.status;
+  loadProjects();
+});
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
+}
+
+loadProjects();
+</script>
+
+</body>
+</html>

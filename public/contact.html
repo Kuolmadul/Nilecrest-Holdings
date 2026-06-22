@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact | Nilecrest Holdings</title>
+<link rel="icon" href="assets/images/logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<div class="nav">
+  <a href="index.html" class="nav-logo-link">
+    <img src="assets/images/logo.png" class="nav-logo-img" alt="Nilecrest Holdings - Logistics, Transport, Construction">
+  </a>
+  <div class="nav-links">
+    <a href="about.html">About</a>
+    <a href="services.html">Services</a>
+    <a href="projects.html">Projects</a>
+    <a href="fleet.html">Fleet</a>
+    <a href="contact.html" class="active">Contact</a>
+  </div>
+  <a href="quote.html"><button class="nav-cta">Get a Quote</button></a>
+</div>
+
+<div class="page-header">
+  <img src="assets/images/watermark-light.png" class="page-header-watermark" alt="">
+  <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span class="current">Contact</span></div>
+  <h1>Let's talk about <em>your next job</em></h1>
+  <p>Reach us by phone, email, or WhatsApp, or send a message below and we'll get back to you within 24 hours.</p>
+</div>
+
+<div class="section">
+  <div class="contact-info-grid" id="contactInfoGrid">
+    <div class="contact-info-card">
+      <div class="contact-info-icon"><i class="ti ti-phone" aria-hidden="true"></i></div>
+      <div class="contact-info-title">Phone</div>
+      <div class="contact-info-val" id="infoPhone">+254 11 0500712</div>
+    </div>
+    <div class="contact-info-card">
+      <div class="contact-info-icon"><i class="ti ti-mail" aria-hidden="true"></i></div>
+      <div class="contact-info-title">Email</div>
+      <div class="contact-info-val" id="infoEmail">Nilecrest@gmail.com</div>
+    </div>
+    <div class="contact-info-card">
+      <div class="contact-info-icon"><i class="ti ti-map-pin" aria-hidden="true"></i></div>
+      <div class="contact-info-title">Office</div>
+      <div class="contact-info-val" id="infoAddress">Nairobi Kenya, PO BOX 0,00100</div>
+    </div>
+  </div>
+
+  <div class="contact-grid">
+    <div>
+      <div class="eyebrow">Send a message</div>
+      <div class="sec-title" style="margin-bottom:18px;">We'll get back to you fast</div>
+      <div id="formMsg" class="public-form-msg"></div>
+      <form class="public-form" id="contactForm">
+        <div class="public-form-row">
+          <div class="public-form-group">
+            <label class="public-form-label">Full Name *</label>
+            <input type="text" class="public-form-input" id="fName" placeholder="Your name" required>
+          </div>
+          <div class="public-form-group">
+            <label class="public-form-label">Email Address *</label>
+            <input type="email" class="public-form-input" id="fEmail" placeholder="you@company.com" required>
+          </div>
+        </div>
+        <div class="public-form-row">
+          <div class="public-form-group">
+            <label class="public-form-label">Phone Number</label>
+            <input type="text" class="public-form-input" id="fPhone" placeholder="+254 ...">
+          </div>
+          <div class="public-form-group">
+            <label class="public-form-label">Subject</label>
+            <input type="text" class="public-form-input" id="fSubject" placeholder="What's this about?">
+          </div>
+        </div>
+        <div class="public-form-group">
+          <label class="public-form-label">Message *</label>
+          <textarea class="public-form-input" id="fMessage" rows="5" placeholder="How can we help?" required></textarea>
+        </div>
+        <button type="submit" class="public-form-submit" id="submitBtn"><i class="ti ti-send" aria-hidden="true"></i> Send Message</button>
+      </form>
+    </div>
+
+    <div>
+      <div class="eyebrow">Find us</div>
+      <div class="sec-title" style="margin-bottom:18px;">Our office</div>
+      <div style="border-radius:12px;overflow:hidden;border:0.5px solid #e0e4ef;" id="mapEmbedWrap">
+        <div style="padding:40px;text-align:center;color:#94a3b8;font-size:13px;">Loading map...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="footer-top">
+    <div>
+      <div class="footer-brand">NILE<em>CREST</em> HOLDINGS</div>
+      <div class="footer-tagline">Logistics &middot; Transport &middot; Construction<br>Delivering excellence across East Africa.</div>
+      <div class="footer-contacts">
+        <div class="footer-contact"><i class="ti ti-phone" aria-hidden="true"></i> +254 11 0500712</div>
+        <div class="footer-contact"><i class="ti ti-mail" aria-hidden="true"></i> Nilecrest@gmail.com</div>
+        <div class="footer-contact"><i class="ti ti-map-pin" aria-hidden="true"></i> Nairobi Kenya, PO BOX 0,00100</div>
+      </div>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Services</div>
+      <a href="services.html">Logistics &amp; Freight</a>
+      <a href="services.html">Transport Solutions</a>
+      <a href="services.html">Civil Construction</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Company</div>
+      <a href="about.html">About Us</a>
+      <a href="projects.html">Projects</a>
+      <a href="fleet.html">Fleet</a>
+      <a href="contact.html">Contact</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">&copy; 2026 Nilecrest Holdings Ltd. All rights reserved.</div>
+    <a href="https://wa.me/254110500712" target="_blank"><button class="wa-btn"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i> WhatsApp Us</button></a>
+  </div>
+</div>
+
+<script>
+// Pulls site contact details and the map embed from the admin Settings page, so it stays in sync everywhere.
+fetch('/api/settings')
+  .then(res => res.json())
+  .then(settings => {
+    if (settings.site_phone) document.getElementById('infoPhone').textContent = settings.site_phone;
+    if (settings.site_email) document.getElementById('infoEmail').textContent = settings.site_email;
+    if (settings.site_address) document.getElementById('infoAddress').textContent = settings.site_address;
+
+    const wrap = document.getElementById('mapEmbedWrap');
+    if (settings.maps_embed_url) {
+      wrap.innerHTML = `<iframe src="${settings.maps_embed_url}" width="100%" height="360" style="border:0;display:block;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`;
+    } else {
+      wrap.innerHTML = `<div style="padding:40px;text-align:center;color:#94a3b8;font-size:13px;">Map not configured yet.</div>`;
+    }
+  })
+  .catch(() => {
+    document.getElementById('mapEmbedWrap').innerHTML = `<div style="padding:40px;text-align:center;color:#94a3b8;font-size:13px;">Map unavailable.</div>`;
+  });
+
+document.getElementById('contactForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('formMsg');
+  const btn = document.getElementById('submitBtn');
+
+  const payload = {
+    name: document.getElementById('fName').value.trim(),
+    email: document.getElementById('fEmail').value.trim(),
+    phone: document.getElementById('fPhone').value.trim(),
+    subject: document.getElementById('fSubject').value.trim(),
+    message: document.getElementById('fMessage').value.trim(),
+  };
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader-2" aria-hidden="true"></i> Sending...';
+
+  try {
+    const res = await fetch('/api/enquiries', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || 'Something went wrong. Please try again.');
+
+    msg.className = 'public-form-msg success';
+    msg.innerHTML = '<i class="ti ti-circle-check" aria-hidden="true"></i> Message sent! We will get back to you within 24 hours.';
+    msg.style.display = 'flex';
+    document.getElementById('contactForm').reset();
+  } catch (err) {
+    msg.className = 'public-form-msg error';
+    msg.innerHTML = `<i class="ti ti-alert-circle" aria-hidden="true"></i> ${err.message}`;
+    msg.style.display = 'flex';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-send" aria-hidden="true"></i> Send Message';
+  }
+});
+</script>
+
+</body>
+</html>

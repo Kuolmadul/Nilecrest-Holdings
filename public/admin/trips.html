@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trips & Schedule | Nilecrest Admin</title>
+<link rel="icon" href="../assets/images/logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<div id="sidebarMount"></div>
+
+<div class="main-wrap">
+  <header class="topbar">
+    <button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="ti ti-menu-2"></i></button>
+    <div class="topbar-title">Trips &amp; Schedule</div>
+    <div class="topbar-right">
+      <a href="../index.html" target="_blank" class="topbar-link"><i class="ti ti-external-link"></i> View Site</a>
+      <div class="topbar-notif"><i class="ti ti-bell"></i><span class="notif-dot"></span></div>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="page-heading">
+      <div>
+        <div class="page-title">Trips &amp; Schedule</div>
+        <div class="page-sub">Manage passenger trips, shuttle contracts, and one-off hires.</div>
+      </div>
+      <button class="btn-primary" onclick="openModal()"><i class="ti ti-plus"></i> New Trip</button>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row" style="margin-bottom:20px;">
+      <div class="stat-card"><div class="stat-icon orange"><i class="ti ti-clock"></i></div><div class="stat-info"><div class="stat-val" id="cntScheduled">-</div><div class="stat-lbl">Scheduled</div></div></div>
+      <div class="stat-card"><div class="stat-icon navy"><i class="ti ti-route"></i></div><div class="stat-info"><div class="stat-val" id="cntProgress">-</div><div class="stat-lbl">In Progress</div></div></div>
+      <div class="stat-card"><div class="stat-icon green"><i class="ti ti-circle-check"></i></div><div class="stat-info"><div class="stat-val" id="cntCompleted">-</div><div class="stat-lbl">Completed</div></div></div>
+      <div class="stat-card"><div class="stat-icon purple"><i class="ti ti-list"></i></div><div class="stat-info"><div class="stat-val" id="cntTotal">-</div><div class="stat-lbl">Total Trips</div></div></div>
+    </div>
+
+    <div class="card">
+      <div class="page-toolbar">
+        <input type="text" class="search-input" id="searchInput" placeholder="Search by ref, client, route...">
+        <select class="filter-select" id="statusFilter">
+          <option value="">All Statuses</option>
+          <option value="Scheduled">Scheduled</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Completed">Completed</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+        <select class="filter-select" id="typeFilter">
+          <option value="">All Types</option>
+          <option value="one_off">One-Off</option>
+          <option value="recurring">Recurring</option>
+          <option value="charter">Charter</option>
+        </select>
+      </div>
+      <div class="full-table-wrap">
+        <table class="full-table">
+          <thead><tr><th>Ref</th><th>Client</th><th>Route</th><th>Type</th><th>Vehicle</th><th>Departure</th><th>Pax</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="tripsBody"><tr><td colspan="9" class="table-loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0 4px;">
+        <div id="paginationInfo" style="font-size:11.5px;color:var(--text-3);"></div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn-outline" id="prevBtn" onclick="changePage(-1)">&#8592; Prev</button>
+          <button class="btn-outline" id="nextBtn" onclick="changePage(1)">Next &#8594;</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+<div class="modal" id="modal" style="width:min(600px,96vw);">
+  <div class="modal-head">
+    <div class="modal-title" id="modalTitle">New Trip</div>
+    <button class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="tripId">
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Client Name</label><input type="text" class="form-input" id="fClientName" placeholder="e.g. Safaricom PLC"></div>
+      <div class="form-group">
+        <label class="form-label">Trip Type</label>
+        <select class="form-input" id="fTripType">
+          <option value="one_off">One-Off Hire</option>
+          <option value="recurring">Recurring / Shuttle</option>
+          <option value="charter">Charter</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Route</label><input type="text" class="form-input" id="fRoute" placeholder="e.g. Westlands–JKIA Shuttle or Nairobi–Mombasa Charter"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Origin</label><input type="text" class="form-input" id="fOrigin" placeholder="e.g. Westlands, Nairobi"></div>
+      <div class="form-group"><label class="form-label">Destination</label><input type="text" class="form-input" id="fDestination" placeholder="e.g. JKIA"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Assigned Driver</label><input type="text" class="form-input" id="fDriver" placeholder="Driver full name"></div>
+      <div class="form-group"><label class="form-label">Vehicle Reg</label><input type="text" class="form-input" id="fVehicleReg" placeholder="e.g. KBZ 456B"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Departure</label><input type="datetime-local" class="form-input" id="fDeparture"></div>
+      <div class="form-group"><label class="form-label">Expected Arrival</label><input type="datetime-local" class="form-input" id="fArrival"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Passenger Count</label><input type="number" class="form-input" id="fPax" min="0" value="0"></div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-input" id="fStatus">
+          <option value="Scheduled">Scheduled</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Completed">Completed</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="fNotes" rows="2" placeholder="SLA reference, client instructions, etc."></textarea></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-outline" onclick="closeModal()">Cancel</button>
+    <button class="btn-primary" id="saveBtn"><i class="ti ti-device-floppy"></i> Save Trip</button>
+  </div>
+</div>
+
+<!-- VIEW MODAL -->
+<div class="modal-overlay" id="viewOverlay" onclick="closeView()"></div>
+<div class="modal" id="viewModal" style="width:min(540px,96vw);">
+  <div class="modal-head"><div class="modal-title">Trip Details</div><button class="modal-close" onclick="closeView()"><i class="ti ti-x"></i></button></div>
+  <div class="modal-body" id="viewBody"></div>
+  <div class="modal-footer"><button class="btn-outline" onclick="closeView()">Close</button></div>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="reason-modal-overlay" id="deleteOverlay" onclick="closeDelete()"></div>
+<div class="reason-modal" id="deleteModal">
+  <div class="reason-modal-head"><div class="reason-modal-title">Remove Trip</div></div>
+  <div class="reason-modal-body">
+    <p style="font-size:12.5px;color:var(--text-2);margin-bottom:10px;">The trip record is kept in the database for audit purposes.</p>
+    <textarea id="deleteReason" placeholder="Reason for removal (required)"></textarea>
+    <div class="reason-error" id="deleteReasonError">A reason is required.</div>
+  </div>
+  <div class="reason-modal-footer">
+    <button class="btn-outline" onclick="closeDelete()">Cancel</button>
+    <button class="btn-primary" style="background:#ef4444;" id="confirmDeleteBtn">Remove</button>
+  </div>
+</div>
+
+<style>
+.modal-overlay,.reason-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;}
+.modal,.reason-modal{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:12px;z-index:201;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-height:90vh;overflow-y:auto;}
+.modal-overlay.show,.modal.show,.reason-modal-overlay.show,.reason-modal.show{display:block;}
+.modal-head,.reason-modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:0.5px solid #e2e6f0;}
+.modal-title,.reason-modal-title{font-size:15px;font-weight:600;color:#1B2A5E;}
+.modal-close{background:none;border:none;font-size:18px;cursor:pointer;color:#94a3b8;}
+.modal-body,.reason-modal-body{padding:18px 20px;display:flex;flex-direction:column;gap:14px;}
+.modal-footer,.reason-modal-footer{padding:14px 20px;border-top:0.5px solid #e2e6f0;display:flex;justify-content:flex-end;gap:10px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-label{font-size:11px;font-weight:600;color:#64748b;letter-spacing:0.5px;text-transform:uppercase;}
+.form-input{padding:8px 11px;border:0.5px solid #e2e6f0;border-radius:6px;font-size:13px;font-family:'Inter',sans-serif;color:#1e293b;outline:none;}
+.form-input:focus{border-color:#1B6FE8;}
+.btn-outline{padding:8px 16px;border:0.5px solid #e2e6f0;background:#fff;border-radius:6px;font-size:12.5px;font-weight:500;cursor:pointer;color:#64748b;}
+.reason-modal{width:min(440px,95vw);}
+.reason-modal-body textarea{width:100%;box-sizing:border-box;min-height:80px;padding:8px;border:0.5px solid #e2e6f0;border-radius:6px;font-family:'Inter',sans-serif;font-size:13px;resize:vertical;outline:none;}
+.reason-error{font-size:11.5px;color:#ef4444;display:none;margin-top:4px;}
+.detail-row{display:flex;gap:8px;font-size:13px;padding:5px 0;border-bottom:0.5px solid #f1f5f9;}
+.detail-row:last-child{border-bottom:none;}
+.detail-lbl{font-weight:600;color:#64748b;min-width:140px;}
+.detail-val{color:#1e293b;}
+.type-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:#e0e7ff;color:#3730a3;text-transform:capitalize;}
+@media(max-width:520px){.form-row{grid-template-columns:1fr;}}
+</style>
+
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/department-config.js"></script>
+<script src="../assets/js/sidebar.js"></script>
+<script>
+requireLogin();
+renderSidebar('trips');
+applyDepartmentTheme();
+
+const statusPill = {
+  'Scheduled':   'pill-pending',
+  'In Progress': 'pill-review',
+  'Completed':   'pill-won',
+  'Cancelled':   'pill-lost'
+};
+const typeLabel = { one_off: 'One-Off', recurring: 'Recurring', charter: 'Charter' };
+
+let currentPage = 1;
+const PAGE_SIZE = 10;
+let totalCount = 0;
+
+async function loadSummary() {
+  try {
+    const s = await api('/trips/summary');
+    document.getElementById('cntScheduled').textContent  = s['Scheduled'] || 0;
+    document.getElementById('cntProgress').textContent   = s['In Progress'] || 0;
+    document.getElementById('cntCompleted').textContent  = s['Completed'] || 0;
+    document.getElementById('cntTotal').textContent      = s.total || 0;
+  } catch {}
+}
+
+async function loadTrips() {
+  const body = document.getElementById('tripsBody');
+  body.innerHTML = `<tr><td colspan="9" class="table-loading">Loading...</td></tr>`;
+  const status    = document.getElementById('statusFilter').value;
+  const trip_type = document.getElementById('typeFilter').value;
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  try {
+    const params = new URLSearchParams({ page: currentPage, limit: PAGE_SIZE });
+    if (status) params.set('status', status);
+    if (trip_type) params.set('trip_type', trip_type);
+    const data = await api(`/trips?${params}`);
+    totalCount = data.total;
+    let rows = data.rows;
+    if (q) rows = rows.filter(t =>
+      (t.trip_ref || '').toLowerCase().includes(q) ||
+      (t.client_name || '').toLowerCase().includes(q) ||
+      (t.route || '').toLowerCase().includes(q)
+    );
+
+    body.innerHTML = rows.length ? rows.map(t => `
+      <tr>
+        <td><span style="font-weight:600;font-size:11.5px;color:#1B2A5E;">${escapeHtml(t.trip_ref)}</span></td>
+        <td>${escapeHtml(t.client_name)}</td>
+        <td style="font-size:12px;max-width:180px;">${escapeHtml(t.route)}</td>
+        <td><span class="type-badge">${typeLabel[t.trip_type] || t.trip_type}</span></td>
+        <td style="font-size:12px;">${escapeHtml(t.vehicle_reg || t.vehicle_reg_num || '-')}</td>
+        <td style="color:var(--text-2);font-size:12px;">${t.departure_time ? fmtDateTime(t.departure_time) : '-'}</td>
+        <td style="text-align:center;">${t.passenger_count || 0}</td>
+        <td><span class="pill ${statusPill[t.status] || 'pill-pending'}">${escapeHtml(t.status)}</span></td>
+        <td><div class="action-btns">
+          <button class="action-btn" title="View" onclick="viewTrip(${t.id})"><i class="ti ti-eye"></i></button>
+          <button class="action-btn" title="Edit" onclick="editTrip(${t.id})"><i class="ti ti-pencil"></i></button>
+          <button class="action-btn danger" title="Remove" onclick="askDelete(${t.id})"><i class="ti ti-trash"></i></button>
+        </div></td>
+      </tr>`).join('') : `<tr><td colspan="9" class="table-empty">No trips match</td></tr>`;
+
+    const start = (currentPage - 1) * PAGE_SIZE + 1;
+    const end   = Math.min(currentPage * PAGE_SIZE, totalCount);
+    document.getElementById('paginationInfo').textContent = totalCount ? `Showing ${start}–${end} of ${totalCount}` : '';
+    document.getElementById('prevBtn').disabled = currentPage <= 1;
+    document.getElementById('nextBtn').disabled = currentPage * PAGE_SIZE >= totalCount;
+  } catch (e) {
+    body.innerHTML = `<tr><td colspan="9" class="table-empty">Failed to load trips</td></tr>`;
+  }
+}
+
+function changePage(dir) { currentPage = Math.max(1, currentPage + dir); loadTrips(); }
+
+['searchInput','statusFilter','typeFilter'].forEach(id => {
+  document.getElementById(id).addEventListener(id === 'searchInput' ? 'input' : 'change', () => {
+    currentPage = 1; loadTrips();
+  });
+});
+
+function openModal() {
+  document.getElementById('modalTitle').textContent = 'New Trip';
+  document.getElementById('tripId').value = '';
+  ['fClientName','fRoute','fOrigin','fDestination','fDriver','fVehicleReg','fNotes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fDeparture').value = '';
+  document.getElementById('fArrival').value = '';
+  document.getElementById('fPax').value = '0';
+  document.getElementById('fTripType').value = 'one_off';
+  document.getElementById('fStatus').value = 'Scheduled';
+  document.getElementById('modalOverlay').classList.add('show');
+  document.getElementById('modal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+  document.getElementById('modal').classList.remove('show');
+}
+
+async function editTrip(id) {
+  const t = await api(`/trips/${id}`);
+  document.getElementById('modalTitle').textContent = `Edit ${t.trip_ref}`;
+  document.getElementById('tripId').value = t.id;
+  document.getElementById('fClientName').value = t.client_name || '';
+  document.getElementById('fTripType').value   = t.trip_type || 'one_off';
+  document.getElementById('fRoute').value      = t.route || '';
+  document.getElementById('fOrigin').value     = t.origin || '';
+  document.getElementById('fDestination').value = t.destination || '';
+  document.getElementById('fDriver').value     = t.assigned_driver || '';
+  document.getElementById('fVehicleReg').value = t.vehicle_reg || '';
+  document.getElementById('fDeparture').value  = t.departure_time ? t.departure_time.slice(0,16) : '';
+  document.getElementById('fArrival').value    = t.arrival_time ? t.arrival_time.slice(0,16) : '';
+  document.getElementById('fPax').value        = t.passenger_count || 0;
+  document.getElementById('fStatus').value     = t.status;
+  document.getElementById('fNotes').value      = t.notes || '';
+  document.getElementById('modalOverlay').classList.add('show');
+  document.getElementById('modal').classList.add('show');
+}
+
+document.getElementById('saveBtn').addEventListener('click', async () => {
+  const id = document.getElementById('tripId').value;
+  const payload = {
+    client_name:     document.getElementById('fClientName').value,
+    trip_type:       document.getElementById('fTripType').value,
+    route:           document.getElementById('fRoute').value,
+    origin:          document.getElementById('fOrigin').value,
+    destination:     document.getElementById('fDestination').value,
+    assigned_driver: document.getElementById('fDriver').value,
+    vehicle_reg:     document.getElementById('fVehicleReg').value,
+    departure_time:  document.getElementById('fDeparture').value || null,
+    arrival_time:    document.getElementById('fArrival').value || null,
+    passenger_count: parseInt(document.getElementById('fPax').value) || 0,
+    status:          document.getElementById('fStatus').value,
+    notes:           document.getElementById('fNotes').value,
+  };
+  if (!payload.client_name || !payload.route) {
+    alert('Client name and route are required.'); return;
+  }
+  try {
+    if (id) await api(`/trips/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+    else     await api('/trips', { method: 'POST', body: JSON.stringify(payload) });
+    closeModal();
+    loadTrips();
+    loadSummary();
+  } catch (err) { alert(err.message); }
+});
+
+async function viewTrip(id) {
+  const t = await api(`/trips/${id}`);
+  const fields = [
+    ['Ref',         t.trip_ref],
+    ['Client',      t.client_name],
+    ['Route',       t.route],
+    ['Origin',      t.origin || '-'],
+    ['Destination', t.destination || '-'],
+    ['Type',        typeLabel[t.trip_type] || t.trip_type],
+    ['Vehicle',     t.vehicle_reg || t.vehicle_reg_num || '-'],
+    ['Driver',      t.assigned_driver || '-'],
+    ['Departure',   t.departure_time ? fmtDateTime(t.departure_time) : '-'],
+    ['Arrival',     t.arrival_time ? fmtDateTime(t.arrival_time) : '-'],
+    ['Passengers',  t.passenger_count || 0],
+    ['Status',      t.status],
+    ['Notes',       t.notes || '-'],
+  ];
+  document.getElementById('viewBody').innerHTML = fields.map(([l, v]) =>
+    `<div class="detail-row"><span class="detail-lbl">${l}</span><span class="detail-val">${escapeHtml(String(v))}</span></div>`
+  ).join('');
+  document.getElementById('viewOverlay').classList.add('show');
+  document.getElementById('viewModal').classList.add('show');
+}
+
+function closeView() {
+  document.getElementById('viewOverlay').classList.remove('show');
+  document.getElementById('viewModal').classList.remove('show');
+}
+
+let pendingDeleteId = null;
+function askDelete(id) {
+  pendingDeleteId = id;
+  document.getElementById('deleteReason').value = '';
+  document.getElementById('deleteReasonError').style.display = 'none';
+  document.getElementById('deleteOverlay').classList.add('show');
+  document.getElementById('deleteModal').classList.add('show');
+}
+function closeDelete() {
+  document.getElementById('deleteOverlay').classList.remove('show');
+  document.getElementById('deleteModal').classList.remove('show');
+}
+document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+  const reason = document.getElementById('deleteReason').value.trim();
+  if (!reason) { document.getElementById('deleteReasonError').style.display = 'block'; return; }
+  try {
+    await api(`/trips/${pendingDeleteId}`, { method: 'DELETE', body: JSON.stringify({ reason }) });
+    closeDelete();
+    loadTrips();
+    loadSummary();
+  } catch (err) { alert(err.message); }
+});
+
+function fmtDate(d) { return new Date(d).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'numeric' }); }
+function fmtDateTime(d) { return new Date(d).toLocaleString('en-KE', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }); }
+function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str ?? ''; return div.innerHTML; }
+
+loadSummary();
+loadTrips();
+</script>
+</body>
+</html>

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Users &amp; Roles | Nilecrest Admin</title>
+<link rel="icon" href="../assets/images/logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<div id="sidebarMount"></div>
+
+<div class="main-wrap">
+  <header class="topbar">
+    <button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="ti ti-menu-2"></i></button>
+    <div class="topbar-title">Users &amp; Roles</div>
+    <div class="topbar-right">
+      <a href="../index.html" target="_blank" class="topbar-link"><i class="ti ti-external-link"></i> View Site</a>
+      <div class="topbar-notif"><i class="ti ti-bell"></i><span class="notif-dot"></span></div>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="page-heading">
+      <div>
+        <div class="page-title">Users &amp; Roles</div>
+        <div class="page-sub">One overall admin oversees Construction, Transportation, and Logistics, each run by its own manager.</div>
+      </div>
+      <button class="btn-primary" data-admin-only onclick="openModal()"><i class="ti ti-plus"></i> Add Staff Member</button>
+    </div>
+
+    <!-- Per-department counts -->
+    <div class="stats-row" id="deptStatsRow" style="margin-bottom:20px;">
+      <div class="stat-card"><div class="stat-icon purple"><i class="ti ti-shield-star"></i></div><div class="stat-info"><div class="stat-val" id="cntAdmins">-</div><div class="stat-lbl">Super Admin</div></div></div>
+    </div>
+
+    <div class="card">
+      <div class="page-toolbar"><input type="text" class="search-input" id="searchInput" placeholder="Search staff by name or email..."></div>
+      <div class="full-table-wrap">
+        <table class="full-table">
+          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Department</th><th>Last login</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="staffBody"><tr><td colspan="7" class="table-loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ADD/EDIT STAFF MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+<div class="modal" id="modal">
+  <div class="modal-head"><div class="modal-title" id="modalTitle">Add Staff Member</div><button class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></button></div>
+  <div class="modal-body">
+    <input type="hidden" id="staffId">
+    <div class="form-group"><label class="form-label">Full Name</label><input type="text" class="form-input" id="fName" placeholder="e.g. Jane Wambui"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="fEmail" placeholder="name@nilecrestholdings.com"></div>
+      <div class="form-group"><label class="form-label">Phone</label><input type="text" class="form-input" id="fPhone" placeholder="+254 ..."></div>
+    </div>
+    <div class="form-group" id="passwordGroup"><label class="form-label">Temporary Password</label><input type="text" class="form-input" id="fPassword" placeholder="Set an initial password"></div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Role</label>
+        <select class="form-input" id="fRole">
+          <option value="manager">Manager</option>
+          <option value="admin">Admin (oversees all departments)</option>
+        </select>
+      </div>
+      <div class="form-group" id="deptGroup"><label class="form-label">Department</label><select class="form-input" id="fDept"></select></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Status</label>
+      <select class="form-input" id="fActive"><option value="true">Active</option><option value="false">Deactivated</option></select>
+    </div>
+  </div>
+  <div class="modal-footer"><button class="btn-outline" onclick="closeModal()">Cancel</button><button class="btn-primary" id="saveStaffBtn"><i class="ti ti-device-floppy"></i> Save Staff Member</button></div>
+</div>
+
+<style>
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; }
+.modal { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:12px; width:min(520px,95vw); z-index:201; box-shadow:0 20px 60px rgba(0,0,0,0.2); max-height:88vh; overflow-y:auto; }
+.modal-overlay.show, .modal.show { display:block; }
+.modal-head { display:flex; align-items:center; justify-content:space-between; padding:18px 20px 14px; border-bottom:0.5px solid #e2e6f0; }
+.modal-title { font-size:15px; font-weight:600; color:#1B2A5E; }
+.modal-close { background:none; border:none; font-size:18px; cursor:pointer; color:#94a3b8; }
+.modal-body { padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
+.modal-footer { padding:14px 20px; border-top:0.5px solid #e2e6f0; display:flex; justify-content:flex-end; gap:10px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.form-group { display:flex; flex-direction:column; gap:5px; }
+.form-label { font-size:11px; font-weight:600; color:#64748b; letter-spacing:0.5px; text-transform:uppercase; }
+.form-input { padding:8px 11px; border:0.5px solid #e2e6f0; border-radius:6px; font-size:13px; font-family:'Inter',sans-serif; color:#1e293b; outline:none; }
+.form-input:focus { border-color:#1B2A5E; }
+.btn-outline { padding:8px 16px; border:0.5px solid #e2e6f0; background:#fff; border-radius:6px; font-size:12.5px; font-weight:500; cursor:pointer; color:#64748b; }
+.dept-pill { font-size:11px; padding:3px 9px; border-radius:20px; background:rgba(27,42,94,0.08); color:#1B2A5E; font-weight:500; }
+.admin-pill { font-size:11px; padding:3px 9px; border-radius:20px; background:rgba(232,92,26,0.1); color:#E85C1A; font-weight:600; }
+@media (max-width:480px) { .form-row { grid-template-columns:1fr; } }
+</style>
+
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/department-config.js"></script>
+<script src="../assets/js/sidebar.js"></script>
+<script>
+requireLogin();
+
+// Managers should not be able to reach this page at all -- redirect them home.
+if (getStaff()?.role !== 'admin') {
+  window.location.href = 'index.html';
+}
+
+renderSidebar('users');
+applyDepartmentTheme();
+
+let departments = [];
+let allStaff = [];
+
+async function loadDepartments() {
+  const { rows } = await api('/staff/departments');
+  departments = rows;
+  const fDept = document.getElementById('fDept');
+  fDept.innerHTML = rows.map(d => `<option value="${d.id}">${escapeHtml(d.name)}</option>`).join('');
+}
+
+async function loadSummary() {
+  const { departments: deptCounts, admins } = await api('/staff/summary');
+  document.getElementById('cntAdmins').textContent = admins;
+  const row = document.getElementById('deptStatsRow');
+  // Keep the admin card, append one card per department with its staff count
+  row.querySelectorAll('.dept-stat-card').forEach(el => el.remove());
+  const icons = { Construction: 'ti-building-skyscraper', Transportation: 'ti-bus', Logistics: 'ti-truck' };
+  deptCounts.forEach(d => {
+    row.insertAdjacentHTML('beforeend', `
+      <div class="stat-card dept-stat-card">
+        <div class="stat-icon navy"><i class="ti ${icons[d.department] || 'ti-users'}"></i></div>
+        <div class="stat-info"><div class="stat-val">${d.staff_count}</div><div class="stat-lbl">${escapeHtml(d.department)} Staff</div></div>
+      </div>`);
+  });
+}
+
+async function loadStaff() {
+  const body = document.getElementById('staffBody');
+  body.innerHTML = `<tr><td colspan="7" class="table-loading">Loading...</td></tr>`;
+  try {
+    const { rows } = await api('/staff');
+    allStaff = rows;
+    renderStaff(rows);
+  } catch {
+    body.innerHTML = `<tr><td colspan="7" class="table-empty">Failed to load staff</td></tr>`;
+  }
+}
+
+function renderStaff(rows) {
+  const body = document.getElementById('staffBody');
+  const isAdmin = getStaff()?.role === 'admin';
+  body.innerHTML = rows.length ? rows.map(s => `
+    <tr>
+      <td><span style="font-weight:500;">${escapeHtml(s.name)}</span></td>
+      <td style="color:var(--text-2);">${escapeHtml(s.email)}</td>
+      <td>${s.role === 'admin' ? '<span class="admin-pill">Super Admin</span>' : '<span class="dept-pill">Manager</span>'}</td>
+      <td>${escapeHtml(s.department_name || 'All Departments')}</td>
+      <td style="color:var(--text-2);">${s.last_login ? timeAgo(s.last_login) : 'Never'}</td>
+      <td><span class="pill ${s.is_active ? 'pill-won' : 'pill-lost'}">${s.is_active ? 'Active' : 'Deactivated'}</span></td>
+      <td>${isAdmin ? `<div class="action-btns">
+        <button class="action-btn" title="Edit" onclick="editStaff(${s.id})"><i class="ti ti-pencil"></i></button>
+        ${s.is_active ? `<button class="action-btn danger" title="Deactivate" onclick="deactivateStaff(${s.id})"><i class="ti ti-user-off"></i></button>` : ''}
+      </div>` : '-'}</td>
+    </tr>`).join('') : `<tr><td colspan="7" class="table-empty">No staff found</td></tr>`;
+}
+
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  const q = e.target.value.trim().toLowerCase();
+  const filtered = q ? allStaff.filter(s => s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q)) : allStaff;
+  renderStaff(filtered);
+});
+
+document.getElementById('fRole').addEventListener('change', (e) => {
+  document.getElementById('deptGroup').style.display = e.target.value === 'admin' ? 'none' : '';
+});
+
+function openModal() {
+  document.getElementById('modalTitle').textContent = 'Add Staff Member';
+  document.getElementById('staffId').value = '';
+  document.getElementById('passwordGroup').style.display = '';
+  document.getElementById('deptGroup').style.display = '';
+  ['fName','fEmail','fPhone','fPassword'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fRole').value = 'manager';
+  document.getElementById('fActive').value = 'true';
+  document.getElementById('modalOverlay').classList.add('show');
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+  document.getElementById('modal').classList.remove('show');
+}
+
+function editStaff(id) {
+  const s = allStaff.find(x => x.id === id);
+  if (!s) return;
+  document.getElementById('modalTitle').textContent = `Edit ${s.name}`;
+  document.getElementById('staffId').value = s.id;
+  document.getElementById('passwordGroup').style.display = 'none';
+  document.getElementById('fName').value = s.name;
+  document.getElementById('fEmail').value = s.email;
+  document.getElementById('fEmail').disabled = true;
+  document.getElementById('fPhone').value = s.phone || '';
+  document.getElementById('fRole').value = s.role;
+  document.getElementById('deptGroup').style.display = s.role === 'admin' ? 'none' : '';
+  document.getElementById('fDept').value = s.department_id || '';
+  document.getElementById('fActive').value = String(s.is_active);
+  document.getElementById('modalOverlay').classList.add('show');
+  document.getElementById('modal').classList.add('show');
+}
+
+document.getElementById('saveStaffBtn').addEventListener('click', async () => {
+  const id = document.getElementById('staffId').value;
+  const role = document.getElementById('fRole').value;
+  try {
+    if (id) {
+      await api(`/staff/${id}`, { method: 'PUT', body: JSON.stringify({
+        name: document.getElementById('fName').value,
+        phone: document.getElementById('fPhone').value,
+        role,
+        department_id: role === 'admin' ? null : document.getElementById('fDept').value,
+        is_active: document.getElementById('fActive').value === 'true',
+      })});
+    } else {
+      await api('/staff', { method: 'POST', body: JSON.stringify({
+        name: document.getElementById('fName').value,
+        email: document.getElementById('fEmail').value,
+        phone: document.getElementById('fPhone').value,
+        password: document.getElementById('fPassword').value,
+        role,
+        department_id: role === 'admin' ? null : document.getElementById('fDept').value,
+      })});
+    }
+    document.getElementById('fEmail').disabled = false;
+    closeModal();
+    loadStaff();
+    loadSummary();
+  } catch (err) { alert(err.message); }
+});
+
+async function deactivateStaff(id) {
+  if (!confirm('Deactivate this staff member? They will no longer be able to log in.')) return;
+  try {
+    await api(`/staff/${id}`, { method: 'DELETE' });
+    loadStaff();
+    loadSummary();
+  } catch (err) { alert(err.message); }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
+}
+
+loadDepartments();
+loadSummary();
+loadStaff();
+</script>
+</body>
+</html>

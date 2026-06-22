@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projects | Nilecrest Admin</title>
+<link rel="icon" href="../assets/images/logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<div id="sidebarMount"></div>
+
+<div class="main-wrap">
+  <header class="topbar">
+    <button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="ti ti-menu-2"></i></button>
+    <div class="topbar-title">Projects</div>
+    <div class="topbar-right">
+      <a href="../index.html" target="_blank" class="topbar-link"><i class="ti ti-external-link"></i> View Site</a>
+      <div class="topbar-notif"><i class="ti ti-bell"></i><span class="notif-dot"></span></div>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="page-heading">
+      <div>
+        <div class="page-title">Projects</div>
+        <div class="page-sub">Changes here are immediately visible on the public site and to clients.</div>
+      </div>
+      <button class="btn-primary" onclick="openModal()"><i class="ti ti-plus"></i> Add Project</button>
+    </div>
+
+    <div class="stats-row" style="margin-bottom:20px;">
+      <div class="stat-card"><div class="stat-icon navy"><i class="ti ti-building-skyscraper"></i></div><div class="stat-info"><div class="stat-val" id="cntOngoing">-</div><div class="stat-lbl">Ongoing</div></div></div>
+      <div class="stat-card"><div class="stat-icon green"><i class="ti ti-circle-check"></i></div><div class="stat-info"><div class="stat-val" id="cntCompleted">-</div><div class="stat-lbl">Completed</div></div></div>
+      <div class="stat-card"><div class="stat-icon orange"><i class="ti ti-calendar"></i></div><div class="stat-info"><div class="stat-val" id="cntPlanned">-</div><div class="stat-lbl">Planned</div></div></div>
+      <div class="stat-card"><div class="stat-icon purple"><i class="ti ti-list"></i></div><div class="stat-info"><div class="stat-val" id="cntTotal">-</div><div class="stat-lbl">Total Projects</div></div></div>
+    </div>
+
+    <div class="card">
+      <div class="page-toolbar">
+        <input type="text" class="search-input" id="searchInput" placeholder="Search by project title or location...">
+        <select class="filter-select" id="statusFilter">
+          <option value="">All Statuses</option>
+          <option value="ongoing">Ongoing</option>
+          <option value="completed">Completed</option>
+          <option value="planned">Planned</option>
+          <option value="on_hold">On hold</option>
+        </select>
+        <select class="filter-select" id="deptFilter"><option value="">All Departments</option></select>
+      </div>
+      <div class="full-table-wrap">
+        <table class="full-table">
+          <thead><tr><th>Title</th><th>Department</th><th>Location</th><th>Status</th><th>Progress</th><th>Actions</th></tr></thead>
+          <tbody id="projectsBody"><tr><td colspan="6" class="table-loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+<div class="modal" id="modal">
+  <div class="modal-head"><div class="modal-title" id="modalTitle">Add Project</div><button class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></button></div>
+  <div class="modal-body">
+    <input type="hidden" id="projectId">
+    <div class="form-group"><label class="form-label">Title</label><input type="text" class="form-input" id="fTitle" placeholder="e.g. Mombasa Road Commercial Hub"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Department</label><select class="form-input" id="fDept"></select></div>
+      <div class="form-group"><label class="form-label">Location</label><input type="text" class="form-input" id="fLocation" placeholder="e.g. Nairobi, Kenya"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="fDescription" rows="3"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="fStartDate"></div>
+      <div class="form-group"><label class="form-label">End Date</label><input type="date" class="form-input" id="fEndDate"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-input" id="fStatus">
+          <option value="ongoing">Ongoing</option><option value="completed">Completed</option>
+          <option value="planned">Planned</option><option value="on_hold">On hold</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Progress %</label><input type="number" class="form-input" id="fProgress" min="0" max="100" value="0"></div>
+    </div>
+
+    <!-- Construction-specific fields (shown when dept = Construction) -->
+    <div id="constructionFields" style="display:none;border-top:0.5px solid #e2e6f0;padding-top:14px;display:none;flex-direction:column;gap:14px;">
+      <div style="font-size:11px;font-weight:700;color:#E85C1A;letter-spacing:0.5px;text-transform:uppercase;">Construction Details</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Contract Value (KES)</label><input type="number" class="form-input" id="fContractValue" placeholder="e.g. 5000000"></div>
+        <div class="form-group"><label class="form-label">Budget Spent (KES)</label><input type="number" class="form-input" id="fBudgetSpent" placeholder="e.g. 1200000"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Current Phase</label>
+          <select class="form-input" id="fPhase">
+            <option value="planning">Planning</option><option value="foundation">Foundation</option>
+            <option value="structure">Structure</option><option value="finishing">Finishing</option>
+            <option value="handover">Handover</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Client Company</label><input type="text" class="form-input" id="fClientCompany" placeholder="e.g. Kenya Power PLC"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Site Engineer</label><input type="text" class="form-input" id="fSiteEngineer" placeholder="Full name"></div>
+        <div class="form-group"><label class="form-label">Foreman</label><input type="text" class="form-input" id="fForeman" placeholder="Full name"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Permit Number</label><input type="text" class="form-input" id="fPermitNumber" placeholder="e.g. NCA/2026/00123"></div>
+        <div class="form-group" style="justify-content:flex-end;padding-bottom:4px;">
+          <label class="form-label" style="margin-bottom:8px;">Permit Approved</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="fPermitApproved" style="width:15px;height:15px;"> Yes, permit has been approved
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer"><button class="btn-outline" onclick="closeModal()">Cancel</button><button class="btn-primary" id="saveProjectBtn"><i class="ti ti-device-floppy"></i> Save Project</button></div>
+</div>
+
+<!-- DELETE REASON MODAL -->
+<div class="reason-modal-overlay" id="deleteOverlay" onclick="closeDeleteModal()"></div>
+<div class="reason-modal" id="deleteModal">
+  <div class="reason-modal-head"><div class="reason-modal-title">Delete project</div></div>
+  <div class="reason-modal-body">
+    <p style="font-size:12.5px;color:var(--text-2);margin-bottom:10px;">The project disappears from the dashboard and the public site, but stays in the database marked deleted.</p>
+    <textarea id="deleteReasonInput" placeholder="Reason for deletion (required)"></textarea>
+    <div class="reason-error" id="deleteReasonError">A reason is required.</div>
+  </div>
+  <div class="reason-modal-footer"><button class="btn-outline" onclick="closeDeleteModal()">Cancel</button><button class="btn-primary" style="background:#ef4444;" id="confirmDeleteBtn">Delete project</button></div>
+</div>
+
+<style>
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; }
+.modal { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:12px; width:min(560px,95vw); z-index:201; box-shadow:0 20px 60px rgba(0,0,0,0.2); max-height:88vh; overflow-y:auto; }
+.modal-overlay.show, .modal.show { display:block; }
+.modal-head { display:flex; align-items:center; justify-content:space-between; padding:18px 20px 14px; border-bottom:0.5px solid #e2e6f0; }
+.modal-title { font-size:15px; font-weight:600; color:#1B2A5E; }
+.modal-close { background:none; border:none; font-size:18px; cursor:pointer; color:#94a3b8; }
+.modal-body { padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
+.modal-footer { padding:14px 20px; border-top:0.5px solid #e2e6f0; display:flex; justify-content:flex-end; gap:10px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.form-group { display:flex; flex-direction:column; gap:5px; }
+.form-label { font-size:11px; font-weight:600; color:#64748b; letter-spacing:0.5px; text-transform:uppercase; }
+.form-input { padding:8px 11px; border:0.5px solid #e2e6f0; border-radius:6px; font-size:13px; font-family:'Inter',sans-serif; color:#1e293b; outline:none; }
+.form-input:focus { border-color:#1B2A5E; }
+.btn-outline { padding:8px 16px; border:0.5px solid #e2e6f0; background:#fff; border-radius:6px; font-size:12.5px; font-weight:500; cursor:pointer; color:#64748b; }
+@media (max-width:520px) { .form-row { grid-template-columns:1fr; } }
+</style>
+
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/department-config.js"></script>
+<script src="../assets/js/sidebar.js"></script>
+<script>
+requireLogin();
+renderSidebar('projects');
+applyDepartmentTheme();
+
+const statusPill = { ongoing: 'pill-review', completed: 'pill-won', planned: 'pill-pending', on_hold: 'pill-lost' };
+const statusLabel = { ongoing: 'Ongoing', completed: 'Completed', planned: 'Planned', on_hold: 'On hold' };
+let departments = [];
+
+async function loadDepartments() {
+  const { rows } = await api('/staff/departments');
+  departments = rows;
+  const deptFilter = document.getElementById('deptFilter');
+  const fDept = document.getElementById('fDept');
+  rows.forEach(d => {
+    deptFilter.innerHTML += `<option value="${d.slug}">${escapeHtml(d.name)}</option>`;
+    fDept.innerHTML += `<option value="${d.id}" data-slug="${d.slug}">${escapeHtml(d.name)}</option>`;
+  });
+  // Show/hide construction fields when dept changes
+  fDept.addEventListener('change', () => {
+    const sel = fDept.options[fDept.selectedIndex];
+    const slug = sel ? sel.getAttribute('data-slug') : '';
+    const cf = document.getElementById('constructionFields');
+    cf.style.display = slug === 'construction' ? 'flex' : 'none';
+  });
+}
+
+async function loadSummary() {
+  const s = await api('/projects/summary');
+  document.getElementById('cntOngoing').textContent = s.ongoing;
+  document.getElementById('cntCompleted').textContent = s.completed;
+  document.getElementById('cntPlanned').textContent = s.planned;
+  document.getElementById('cntTotal').textContent = s.total;
+}
+
+async function loadProjects() {
+  const body = document.getElementById('projectsBody');
+  body.innerHTML = `<tr><td colspan="6" class="table-loading">Loading...</td></tr>`;
+  const status = document.getElementById('statusFilter').value;
+  const department = document.getElementById('deptFilter').value;
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+
+  try {
+    const params = new URLSearchParams();
+    if (status) params.set('status', status);
+    if (department) params.set('department', department);
+    const data = await api(`/projects?${params.toString()}`);
+    let rows = data.rows;
+    if (q) rows = rows.filter(p => p.title.toLowerCase().includes(q) || (p.location || '').toLowerCase().includes(q));
+
+    body.innerHTML = rows.length ? rows.map(p => `
+      <tr>
+        <td><span style="font-weight:500;">${escapeHtml(p.title)}</span></td>
+        <td>${escapeHtml(p.department_name || '-')}</td>
+        <td style="color:var(--text-2);">${escapeHtml(p.location || '-')}</td>
+        <td><span class="pill ${statusPill[p.status]}">${statusLabel[p.status]}</span></td>
+        <td style="color:var(--text-2);">${p.progress_pct}%</td>
+        <td><div class="action-btns">
+          <button class="action-btn" title="Edit" onclick="editProject(${p.id})"><i class="ti ti-pencil"></i></button>
+          <button class="action-btn danger" title="Delete" onclick="askDeleteProject(${p.id})"><i class="ti ti-trash"></i></button>
+        </div></td>
+      </tr>`).join('') : `<tr><td colspan="6" class="table-empty">No projects match</td></tr>`;
+  } catch {
+    body.innerHTML = `<tr><td colspan="6" class="table-empty">Failed to load projects</td></tr>`;
+  }
+}
+
+document.getElementById('searchInput').addEventListener('input', loadProjects);
+document.getElementById('statusFilter').addEventListener('change', loadProjects);
+document.getElementById('deptFilter').addEventListener('change', loadProjects);
+
+function openModal() {
+  document.getElementById('modalTitle').textContent = 'Add Project';
+  document.getElementById('projectId').value = '';
+  ['fTitle','fLocation','fDescription','fStartDate','fEndDate',
+   'fContractValue','fBudgetSpent','fClientCompany','fSiteEngineer','fForeman','fPermitNumber'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fStatus').value = 'ongoing';
+  document.getElementById('fProgress').value = 0;
+  document.getElementById('fPhase') && (document.getElementById('fPhase').value = 'planning');
+  document.getElementById('fPermitApproved') && (document.getElementById('fPermitApproved').checked = false);
+  document.getElementById('constructionFields').style.display = 'none';
+  document.getElementById('modalOverlay').classList.add('show');
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+  document.getElementById('modal').classList.remove('show');
+}
+
+async function editProject(id) {
+  const p = await api(`/projects/${id}`);
+  document.getElementById('modalTitle').textContent = `Edit ${p.title}`;
+  document.getElementById('projectId').value = p.id;
+  document.getElementById('fTitle').value = p.title;
+  document.getElementById('fDept').value = p.department_id || '';
+  document.getElementById('fLocation').value = p.location || '';
+  document.getElementById('fDescription').value = p.description || '';
+  document.getElementById('fStatus').value = p.status;
+  document.getElementById('fProgress').value = p.progress_pct;
+  document.getElementById('fStartDate').value = p.started_at ? p.started_at.slice(0,10) : '';
+  document.getElementById('fEndDate').value   = p.ended_at ? p.ended_at.slice(0,10) : '';
+  // Construction fields
+  const isConstruction = p.department_slug === 'construction';
+  document.getElementById('constructionFields').style.display = isConstruction ? 'flex' : 'none';
+  if (isConstruction) {
+    document.getElementById('fContractValue').value = p.contract_value || '';
+    document.getElementById('fBudgetSpent').value   = p.budget_spent || '';
+    document.getElementById('fPhase').value          = p.phase || 'planning';
+    document.getElementById('fClientCompany').value  = p.client_company || '';
+    document.getElementById('fSiteEngineer').value   = p.site_engineer || '';
+    document.getElementById('fForeman').value         = p.foreman || '';
+    document.getElementById('fPermitNumber').value   = p.permit_number || '';
+    document.getElementById('fPermitApproved').checked = p.permit_approved || false;
+  }
+  document.getElementById('modalOverlay').classList.add('show');
+  document.getElementById('modal').classList.add('show');
+}
+
+document.getElementById('saveProjectBtn').addEventListener('click', async () => {
+  const id = document.getElementById('projectId').value;
+  const deptSel = document.getElementById('fDept');
+  const deptSlug = deptSel.options[deptSel.selectedIndex] ? deptSel.options[deptSel.selectedIndex].getAttribute('data-slug') : '';
+  const payload = {
+    title: document.getElementById('fTitle').value,
+    department_id: document.getElementById('fDept').value || null,
+    location: document.getElementById('fLocation').value,
+    description: document.getElementById('fDescription').value,
+    status: document.getElementById('fStatus').value,
+    progress_pct: Number(document.getElementById('fProgress').value),
+    started_at: document.getElementById('fStartDate').value || null,
+    ended_at:   document.getElementById('fEndDate').value || null,
+  };
+  if (deptSlug === 'construction') {
+    payload.contract_value  = parseFloat(document.getElementById('fContractValue').value) || null;
+    payload.budget_spent    = parseFloat(document.getElementById('fBudgetSpent').value) || 0;
+    payload.phase           = document.getElementById('fPhase').value;
+    payload.client_company  = document.getElementById('fClientCompany').value;
+    payload.site_engineer   = document.getElementById('fSiteEngineer').value;
+    payload.foreman         = document.getElementById('fForeman').value;
+    payload.permit_number   = document.getElementById('fPermitNumber').value;
+    payload.permit_approved = document.getElementById('fPermitApproved').checked;
+  }
+  try {
+    if (id) await api(`/projects/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+    else await api('/projects', { method: 'POST', body: JSON.stringify(payload) });
+    closeModal();
+    loadProjects();
+    loadSummary();
+  } catch (err) { alert(err.message); }
+});
+
+let pendingDeleteId = null;
+function askDeleteProject(id) {
+  pendingDeleteId = id;
+  document.getElementById('deleteReasonInput').value = '';
+  document.getElementById('deleteReasonError').style.display = 'none';
+  document.getElementById('deleteOverlay').classList.add('show');
+  document.getElementById('deleteModal').classList.add('show');
+}
+function closeDeleteModal() {
+  document.getElementById('deleteOverlay').classList.remove('show');
+  document.getElementById('deleteModal').classList.remove('show');
+}
+document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+  const reason = document.getElementById('deleteReasonInput').value.trim();
+  if (!reason) { document.getElementById('deleteReasonError').style.display = 'block'; return; }
+  try {
+    await api(`/projects/${pendingDeleteId}`, { method: 'DELETE', body: JSON.stringify({ reason }) });
+    closeDeleteModal();
+    loadProjects();
+    loadSummary();
+  } catch (err) { alert(err.message); }
+});
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
+}
+
+loadDepartments();
+loadSummary();
+loadProjects();
+</script>
+</body>
+</html>

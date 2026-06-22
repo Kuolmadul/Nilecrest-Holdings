@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings | Nilecrest Admin</title>
+<link rel="icon" href="../assets/images/logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<div id="sidebarMount"></div>
+
+<div class="main-wrap">
+  <header class="topbar">
+    <button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="ti ti-menu-2"></i></button>
+    <div class="topbar-title">Settings</div>
+    <div class="topbar-right">
+      <a href="../index.html" target="_blank" class="topbar-link"><i class="ti ti-external-link"></i> View Site</a>
+      <div class="topbar-notif"><i class="ti ti-bell"></i><span class="notif-dot"></span></div>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="page-heading">
+      <div>
+        <div class="page-title">Settings</div>
+        <div class="page-sub">Manage site-wide details and your own account.</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+
+      <!-- SITE SETTINGS (admin only) -->
+      <div class="card" data-admin-only>
+        <div class="card-head"><div class="card-title">Site Information</div></div>
+        <div class="settings-form">
+          <div class="form-group"><label class="form-label">Site Name</label><input type="text" class="form-input" id="sSiteName"></div>
+          <div class="form-group"><label class="form-label">Tagline</label><input type="text" class="form-input" id="sTagline"></div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Contact Email</label><input type="email" class="form-input" id="sEmail"></div>
+            <div class="form-group"><label class="form-label">Phone Number</label><input type="text" class="form-input" id="sPhone"></div>
+          </div>
+          <div class="form-group"><label class="form-label">WhatsApp Number (digits only, with country code)</label><input type="text" class="form-input" id="sWhatsapp" placeholder="254..."></div>
+          <div class="form-group"><label class="form-label">Office Address</label><textarea class="form-input" id="sAddress" rows="2"></textarea></div>
+          <div class="form-group">
+            <label class="form-label">Google Maps Embed URL</label>
+            <textarea class="form-input" id="sMapsUrl" rows="3" placeholder="Paste the src= URL from the Google Maps embed iframe"></textarea>
+            <div style="font-size:11px;color:var(--text-3);margin-top:2px;">Paste just the src URL from your embed iframe code. This powers the map on the public Contact page.</div>
+          </div>
+          <button class="btn-primary" id="saveSettingsBtn" style="align-self:flex-start;"><i class="ti ti-device-floppy"></i> Save Site Settings</button>
+          <div class="save-msg" id="settingsMsg"></div>
+        </div>
+      </div>
+
+      <!-- MAP PREVIEW (admin only) -->
+      <div class="card" data-admin-only>
+        <div class="card-head"><div class="card-title">Map Preview</div></div>
+        <div id="mapPreviewWrap" style="border-radius:8px;overflow:hidden;border:0.5px solid var(--border);">
+          <div class="table-empty">No map configured yet</div>
+        </div>
+      </div>
+
+      <!-- ACCOUNT (any staff) -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">My Account</div></div>
+        <div class="settings-form">
+          <div class="form-group"><label class="form-label">Name</label><input type="text" class="form-input" id="acName" disabled></div>
+          <div class="form-group"><label class="form-label">Role</label><input type="text" class="form-input" id="acRole" disabled></div>
+          <hr style="border:none;border-top:0.5px solid var(--border);margin:6px 0;">
+          <div class="form-group"><label class="form-label">Current Password</label><input type="password" class="form-input" id="acCurrentPw"></div>
+          <div class="form-group"><label class="form-label">New Password</label><input type="password" class="form-input" id="acNewPw"></div>
+          <button class="btn-primary" id="changePwBtn" style="align-self:flex-start;"><i class="ti ti-lock"></i> Change Password</button>
+          <div class="save-msg" id="accountMsg"></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<style>
+.settings-form { display:flex; flex-direction:column; gap:14px; padding:6px 0; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.form-group { display:flex; flex-direction:column; gap:5px; }
+.form-label { font-size:11px; font-weight:600; color:var(--text-2); letter-spacing:0.5px; text-transform:uppercase; }
+.form-input { padding:8px 11px; border:0.5px solid var(--border); border-radius:6px; font-size:13px; font-family:var(--font); color:var(--text); outline:none; resize:vertical; }
+.form-input:focus { border-color:var(--navy); }
+.form-input:disabled { background:var(--bg); color:var(--text-2); }
+.save-msg { font-size:12px; color:#22c55e; display:none; }
+.save-msg.error { color:#ef4444; }
+@media (max-width:560px) { .form-row { grid-template-columns:1fr; } }
+</style>
+
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/department-config.js"></script>
+<script src="../assets/js/sidebar.js"></script>
+<script>
+requireLogin();
+renderSidebar('settings');
+applyDepartmentTheme();
+
+const staff = getStaff();
+document.getElementById('acName').value = staff?.name || '';
+document.getElementById('acRole').value = staff?.role === 'admin' ? 'Super Admin' : `${staff?.department || ''} Manager`;
+
+async function loadSettings() {
+  if (staff?.role !== 'admin') return; // managers don't see site settings fields at all
+  try {
+    const s = await api('/settings');
+    document.getElementById('sSiteName').value = s.site_name || '';
+    document.getElementById('sTagline').value = s.site_tagline || '';
+    document.getElementById('sEmail').value = s.site_email || '';
+    document.getElementById('sPhone').value = s.site_phone || '';
+    document.getElementById('sWhatsapp').value = s.whatsapp_number || '';
+    document.getElementById('sAddress').value = s.site_address || '';
+    document.getElementById('sMapsUrl').value = s.maps_embed_url || '';
+    renderMapPreview(s.maps_embed_url);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderMapPreview(url) {
+  const wrap = document.getElementById('mapPreviewWrap');
+  if (!url) { wrap.innerHTML = `<div class="table-empty">No map configured yet</div>`; return; }
+  wrap.innerHTML = `<iframe src="${url}" width="100%" height="280" style="border:0;display:block;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`;
+}
+
+document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
+  const msg = document.getElementById('settingsMsg');
+  try {
+    await api('/settings', { method: 'PUT', body: JSON.stringify({
+      site_name: document.getElementById('sSiteName').value,
+      site_tagline: document.getElementById('sTagline').value,
+      site_email: document.getElementById('sEmail').value,
+      site_phone: document.getElementById('sPhone').value,
+      whatsapp_number: document.getElementById('sWhatsapp').value,
+      site_address: document.getElementById('sAddress').value,
+      maps_embed_url: document.getElementById('sMapsUrl').value,
+    })});
+    renderMapPreview(document.getElementById('sMapsUrl').value);
+    msg.textContent = 'Settings saved successfully.';
+    msg.className = 'save-msg';
+    msg.style.display = 'block';
+    setTimeout(() => msg.style.display = 'none', 3000);
+  } catch (err) {
+    msg.textContent = err.message;
+    msg.className = 'save-msg error';
+    msg.style.display = 'block';
+  }
+});
+
+document.getElementById('changePwBtn').addEventListener('click', async () => {
+  const msg = document.getElementById('accountMsg');
+  const current = document.getElementById('acCurrentPw').value;
+  const next = document.getElementById('acNewPw').value;
+  if (!current || !next) {
+    msg.textContent = 'Both current and new password are required.';
+    msg.className = 'save-msg error'; msg.style.display = 'block';
+    return;
+  }
+  try {
+    await api('/settings/account/password', { method: 'PUT', body: JSON.stringify({ current_password: current, new_password: next }) });
+    document.getElementById('acCurrentPw').value = '';
+    document.getElementById('acNewPw').value = '';
+    msg.textContent = 'Password updated successfully.';
+    msg.className = 'save-msg';
+    msg.style.display = 'block';
+    setTimeout(() => msg.style.display = 'none', 3000);
+  } catch (err) {
+    msg.textContent = err.message;
+    msg.className = 'save-msg error';
+    msg.style.display = 'block';
+  }
+});
+
+loadSettings();
+</script>
+</body>
+</html>

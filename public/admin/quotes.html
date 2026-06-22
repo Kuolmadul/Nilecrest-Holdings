@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quotes | Nilecrest Admin</title>
+<link rel="icon" href="../assets/images/logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<div id="sidebarMount"></div>
+
+<div class="main-wrap">
+  <header class="topbar">
+    <button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="ti ti-menu-2"></i></button>
+    <div class="topbar-title">Quotes</div>
+    <div class="topbar-right">
+      <a href="../index.html" target="_blank" class="topbar-link"><i class="ti ti-external-link"></i> View Site</a>
+      <div class="topbar-notif"><i class="ti ti-bell"></i><span class="notif-dot"></span></div>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="page-heading">
+      <div>
+        <div class="page-title">Quote Requests</div>
+        <div class="page-sub">Manage all incoming quote enquiries from clients.</div>
+      </div>
+      <button class="btn-primary" onclick="openModal()"><i class="ti ti-plus"></i> New Quote</button>
+    </div>
+
+    <div class="stats-row" style="margin-bottom:20px;">
+      <div class="stat-card"><div class="stat-icon orange"><i class="ti ti-inbox"></i></div><div class="stat-info"><div class="stat-val" id="cntPending">-</div><div class="stat-lbl">Pending Review</div></div></div>
+      <div class="stat-card"><div class="stat-icon navy"><i class="ti ti-clock"></i></div><div class="stat-info"><div class="stat-val" id="cntReview">-</div><div class="stat-lbl">In Review</div></div></div>
+      <div class="stat-card"><div class="stat-icon green"><i class="ti ti-circle-check"></i></div><div class="stat-info"><div class="stat-val" id="cntWon">-</div><div class="stat-lbl">Won</div></div></div>
+      <div class="stat-card"><div class="stat-icon purple"><i class="ti ti-x"></i></div><div class="stat-info"><div class="stat-val" id="cntLost">-</div><div class="stat-lbl">Lost</div></div></div>
+    </div>
+
+    <div class="card">
+      <div class="page-toolbar">
+        <div class="search-wrap">
+          <input type="text" class="search-input" placeholder="Search by client, company, or ref #..." id="searchInput" autocomplete="off">
+          <div class="suggest-list" id="suggestList"></div>
+        </div>
+        <select class="filter-select" id="statusFilter">
+          <option value="">All Statuses</option>
+          <option value="Pending">Pending</option>
+          <option value="In Review">In Review</option>
+          <option value="Won">Won</option>
+          <option value="Lost">Lost</option>
+        </select>
+        <select class="filter-select" id="serviceFilter">
+          <option value="">All Services</option>
+          <option value="Logistics">Logistics</option>
+          <option value="Transport">Transport</option>
+          <option value="Construction">Construction</option>
+        </select>
+      </div>
+
+      <div class="full-table-wrap">
+        <table class="full-table">
+          <thead><tr><th>Ref #</th><th>Client</th><th>Service</th><th>Description</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="quotesBody"><tr><td colspan="7" class="table-loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <div class="pagination-info" id="pageInfo">-</div>
+        <div class="pagination-btns" id="pageBtns"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- NEW / EDIT QUOTE MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+<div class="modal" id="modal">
+  <div class="modal-head">
+    <div class="modal-title" id="modalTitle">New Quote Request</div>
+    <button class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="quoteId">
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Client Name</label><input type="text" class="form-input" id="fClientName" placeholder="e.g. Kenya Breweries Ltd"></div>
+      <div class="form-group"><label class="form-label">Contact Email</label><input type="email" class="form-input" id="fClientEmail" placeholder="client@company.com"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Phone Number</label><input type="text" class="form-input" id="fClientPhone" placeholder="+254 ..."></div>
+      <div class="form-group">
+        <label class="form-label">Service Type</label>
+        <select class="form-input" id="fServiceType">
+          <option value="">Select service</option>
+          <option value="Logistics">Logistics &amp; Freight</option>
+          <option value="Transport">Transport Solutions</option>
+          <option value="Construction">Civil Construction</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Description / Requirements</label><textarea class="form-input" id="fDescription" rows="3" placeholder="Describe the job scope, locations, timelines..."></textarea></div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-input" id="fStatus">
+          <option value="Pending">Pending</option>
+          <option value="In Review">In Review</option>
+          <option value="Won">Won</option>
+          <option value="Lost">Lost</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Estimated Value (KSh)</label><input type="number" class="form-input" id="fEstValue" placeholder="0"></div>
+    </div>
+    <div class="form-group" id="editReasonGroup" style="display:none;">
+      <label class="form-label">Reason for change</label>
+      <textarea class="form-input" id="fEditReason" rows="2" placeholder="Why is this quote being updated?"></textarea>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-outline" onclick="closeModal()">Cancel</button>
+    <button class="btn-primary" id="saveQuoteBtn"><i class="ti ti-device-floppy"></i> Save Quote</button>
+  </div>
+</div>
+
+<!-- VIEW QUOTE MODAL -->
+<div class="modal-overlay" id="viewOverlay" onclick="closeViewModal()"></div>
+<div class="modal" id="viewModal" style="width:min(620px,95vw);">
+  <div class="modal-head">
+    <div class="modal-title">Quote details</div>
+    <button class="modal-close" onclick="closeViewModal()"><i class="ti ti-x"></i></button>
+  </div>
+  <div class="modal-body" id="viewModalBody"></div>
+  <div class="modal-footer"><button class="btn-outline" onclick="closeViewModal()">Close</button></div>
+</div>
+
+<!-- DELETE REASON MODAL -->
+<div class="reason-modal-overlay" id="deleteOverlay" onclick="closeDeleteModal()"></div>
+<div class="reason-modal" id="deleteModal">
+  <div class="reason-modal-head"><div class="reason-modal-title">Delete quote</div></div>
+  <div class="reason-modal-body">
+    <p style="font-size:12.5px;color:var(--text-2);margin-bottom:10px;">This removes the quote from the dashboard. The record is kept in the database, marked as deleted, for audit purposes.</p>
+    <textarea id="deleteReasonInput" placeholder="Reason for deletion (required)"></textarea>
+    <div class="reason-error" id="deleteReasonError">A reason is required.</div>
+  </div>
+  <div class="reason-modal-footer">
+    <button class="btn-outline" onclick="closeDeleteModal()">Cancel</button>
+    <button class="btn-primary" style="background:#ef4444;" id="confirmDeleteBtn">Delete quote</button>
+  </div>
+</div>
+
+<style>
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; }
+.modal { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:12px; width:min(560px,95vw); z-index:201; box-shadow:0 20px 60px rgba(0,0,0,0.2); max-height:88vh; overflow-y:auto; }
+.modal-overlay.show, .modal.show { display:block; }
+.modal-head { display:flex; align-items:center; justify-content:space-between; padding:18px 20px 14px; border-bottom:0.5px solid #e2e6f0; }
+.modal-title { font-size:15px; font-weight:600; color:#1B2A5E; }
+.modal-close { background:none; border:none; font-size:18px; cursor:pointer; color:#94a3b8; border-radius:4px; padding:2px 4px; }
+.modal-close:hover { color:#1B2A5E; background:#f0f2f8; }
+.modal-body { padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
+.modal-footer { padding:14px 20px; border-top:0.5px solid #e2e6f0; display:flex; justify-content:flex-end; gap:10px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.form-group { display:flex; flex-direction:column; gap:5px; }
+.form-label { font-size:11px; font-weight:600; color:#64748b; letter-spacing:0.5px; text-transform:uppercase; }
+.form-input { padding:8px 11px; border:0.5px solid #e2e6f0; border-radius:6px; font-size:13px; font-family:'Inter',sans-serif; color:#1e293b; outline:none; resize:vertical; }
+.form-input:focus { border-color:#1B2A5E; }
+.btn-outline { padding:8px 16px; border:0.5px solid #e2e6f0; background:#fff; border-radius:6px; font-size:12.5px; font-weight:500; cursor:pointer; color:#64748b; }
+.btn-outline:hover { background:#f0f2f8; }
+@media (max-width:520px) { .form-row { grid-template-columns:1fr; } }
+</style>
+
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/department-config.js"></script>
+<script src="../assets/js/sidebar.js"></script>
+<script>
+requireLogin();
+renderSidebar('quotes');
+applyDepartmentTheme();
+
+const statusPillClass = { Pending: 'pill-pending', 'In Review': 'pill-review', Won: 'pill-won', Lost: 'pill-lost' };
+let currentPage = 1;
+const PAGE_SIZE = 6;
+let searchDebounce;
+
+async function loadSummary() {
+  const s = await api('/quotes/summary');
+  document.getElementById('cntPending').textContent = s.Pending;
+  document.getElementById('cntReview').textContent = s['In Review'];
+  document.getElementById('cntWon').textContent = s.Won;
+  document.getElementById('cntLost').textContent = s.Lost;
+}
+
+function buildQuery() {
+  const q = document.getElementById('searchInput').value.trim();
+  const status = document.getElementById('statusFilter').value;
+  const service = document.getElementById('serviceFilter').value;
+  const params = new URLSearchParams({ page: currentPage, limit: PAGE_SIZE });
+  if (q) params.set('q', q);
+  if (status) params.set('status', status);
+  if (service) params.set('service', service);
+  return params.toString();
+}
+
+async function loadQuotes() {
+  const body = document.getElementById('quotesBody');
+  body.innerHTML = `<tr><td colspan="7" class="table-loading">Loading...</td></tr>`;
+  try {
+    const data = await api(`/quotes?${buildQuery()}`);
+    if (!data.rows.length) {
+      body.innerHTML = `<tr><td colspan="7" class="table-empty">No quotes match your search</td></tr>`;
+    } else {
+      body.innerHTML = data.rows.map(q => `
+        <tr>
+          <td style="color:var(--text-2);font-size:11px;">${escapeHtml(q.ref_number)}</td>
+          <td><span style="font-weight:500;">${escapeHtml(q.client_name)}</span></td>
+          <td>${escapeHtml(q.service_type)}</td>
+          <td style="color:var(--text-2);font-size:11.5px;">${escapeHtml(q.description || '')}</td>
+          <td style="color:var(--text-2);">${formatDate(q.created_at)}</td>
+          <td><span class="pill ${statusPillClass[q.status] || ''}">${q.status}</span></td>
+          <td><div class="action-btns">
+            <button class="action-btn" title="View" onclick="viewQuote(${q.id})"><i class="ti ti-eye"></i></button>
+            <button class="action-btn" title="Edit" onclick="editQuote(${q.id})"><i class="ti ti-pencil"></i></button>
+            <button class="action-btn danger" title="Delete" onclick="askDeleteQuote(${q.id})"><i class="ti ti-trash"></i></button>
+          </div></td>
+        </tr>`).join('');
+    }
+    renderPagination(data.total);
+  } catch (err) {
+    body.innerHTML = `<tr><td colspan="7" class="table-empty">Failed to load quotes</td></tr>`;
+  }
+}
+
+function renderPagination(total) {
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  document.getElementById('pageInfo').textContent = `Showing page ${currentPage} of ${totalPages} (${total} quotes)`;
+  const btns = document.getElementById('pageBtns');
+  let html = '';
+  for (let i = 1; i <= totalPages; i++) {
+    html += `<button class="page-btn${i === currentPage ? ' active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+  }
+  btns.innerHTML = html;
+}
+
+function goToPage(p) { currentPage = p; loadQuotes(); }
+
+// ---------- LIVE PREFIX SEARCH / AUTOCOMPLETE ----------
+const searchInput = document.getElementById('searchInput');
+const suggestList = document.getElementById('suggestList');
+
+searchInput.addEventListener('input', () => {
+  clearTimeout(searchDebounce);
+  const val = searchInput.value.trim();
+  currentPage = 1;
+  if (!val) { suggestList.classList.remove('show'); loadQuotes(); return; }
+  searchDebounce = setTimeout(async () => {
+    try {
+      const data = await api(`/quotes/suggest?q=${encodeURIComponent(val)}`);
+      renderSuggestions(data.suggestions, val);
+      loadQuotes();
+    } catch { /* ignore */ }
+  }, 150);
+});
+
+function renderSuggestions(items, query) {
+  if (!items.length) {
+    suggestList.innerHTML = `<div class="suggest-empty">No matches for "${escapeHtml(query)}"</div>`;
+  } else {
+    suggestList.innerHTML = items.map(s => `
+      <div class="suggest-item" onclick="selectSuggestion('${escapeHtml(s.client_name)}', '${escapeHtml(s.service_type)}', '${escapeHtml(s.status)}')">
+        <div class="suggest-item-name">${escapeHtml(s.client_name)} ${s.company ? `&middot; ${escapeHtml(s.company)}` : ''}</div>
+        <div class="suggest-item-meta">${escapeHtml(s.ref_number)} &middot; ${escapeHtml(s.service_type)} &middot; ${escapeHtml(s.status)}</div>
+      </div>`).join('');
+  }
+  suggestList.classList.add('show');
+}
+
+// Selecting a suggestion auto-aligns the status/service filters to match it
+function selectSuggestion(name, service, status) {
+  searchInput.value = name;
+  document.getElementById('serviceFilter').value = service;
+  document.getElementById('statusFilter').value = status;
+  suggestList.classList.remove('show');
+  currentPage = 1;
+  loadQuotes();
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.search-wrap')) suggestList.classList.remove('show');
+});
+
+// Status/service filters auto-refresh the table the moment a selection changes
+document.getElementById('statusFilter').addEventListener('change', () => { currentPage = 1; loadQuotes(); });
+document.getElementById('serviceFilter').addEventListener('change', () => { currentPage = 1; loadQuotes(); });
+
+// ---------- CREATE / EDIT MODAL ----------
+function openModal() {
+  document.getElementById('modalTitle').textContent = 'New Quote Request';
+  document.getElementById('quoteId').value = '';
+  document.getElementById('editReasonGroup').style.display = 'none';
+  ['fClientName','fClientEmail','fClientPhone','fServiceType','fDescription','fEstValue'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fStatus').value = 'Pending';
+  document.getElementById('modalOverlay').classList.add('show');
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+  document.getElementById('modal').classList.remove('show');
+}
+
+async function editQuote(id) {
+  const { quote } = await api(`/quotes/${id}`);
+  document.getElementById('modalTitle').textContent = `Edit ${quote.ref_number}`;
+  document.getElementById('quoteId').value = quote.id;
+  document.getElementById('fClientName').value = quote.client_name;
+  document.getElementById('fClientEmail').value = quote.client_email;
+  document.getElementById('fClientPhone').value = quote.client_phone || '';
+  document.getElementById('fServiceType').value = quote.service_type;
+  document.getElementById('fDescription').value = quote.description || '';
+  document.getElementById('fStatus').value = quote.status;
+  document.getElementById('fEstValue').value = quote.estimated_value || '';
+  document.getElementById('editReasonGroup').style.display = '';
+  document.getElementById('fEditReason').value = '';
+  document.getElementById('modalOverlay').classList.add('show');
+  document.getElementById('modal').classList.add('show');
+}
+
+document.getElementById('saveQuoteBtn').addEventListener('click', async () => {
+  const id = document.getElementById('quoteId').value;
+  const payload = {
+    client_name: document.getElementById('fClientName').value,
+    client_email: document.getElementById('fClientEmail').value,
+    client_phone: document.getElementById('fClientPhone').value,
+    service_type: document.getElementById('fServiceType').value,
+    description: document.getElementById('fDescription').value,
+    status: document.getElementById('fStatus').value,
+    estimated_value: document.getElementById('fEstValue').value || null,
+  };
+  try {
+    if (id) {
+      payload.reason = document.getElementById('fEditReason').value;
+      await api(`/quotes/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+    } else {
+      await api('/quotes', { method: 'POST', body: JSON.stringify(payload) });
+    }
+    closeModal();
+    loadQuotes();
+    loadSummary();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+// ---------- VIEW MODAL ----------
+async function viewQuote(id) {
+  const { quote, history } = await api(`/quotes/${id}`);
+  document.getElementById('viewModalBody').innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-field"><div class="detail-label">Reference</div><div class="detail-value">${escapeHtml(quote.ref_number)}</div></div>
+      <div class="detail-field"><div class="detail-label">Status</div><div class="detail-value"><span class="pill ${statusPillClass[quote.status]}">${quote.status}</span></div></div>
+      <div class="detail-field"><div class="detail-label">Client</div><div class="detail-value">${escapeHtml(quote.client_name)}</div></div>
+      <div class="detail-field"><div class="detail-label">Company</div><div class="detail-value">${escapeHtml(quote.company || '-')}</div></div>
+      <div class="detail-field"><div class="detail-label">Email</div><div class="detail-value">${escapeHtml(quote.client_email)}</div></div>
+      <div class="detail-field"><div class="detail-label">Phone</div><div class="detail-value">${escapeHtml(quote.client_phone || '-')}</div></div>
+      <div class="detail-field"><div class="detail-label">Service</div><div class="detail-value">${escapeHtml(quote.service_type)}</div></div>
+      <div class="detail-field"><div class="detail-label">Estimated value</div><div class="detail-value">${formatMoney(quote.estimated_value)}</div></div>
+      <div class="detail-field" style="grid-column:1/-1;"><div class="detail-label">Description</div><div class="detail-value">${escapeHtml(quote.description || '-')}</div></div>
+    </div>
+    <div class="detail-label" style="margin-bottom:8px;">History</div>
+    ${history.length ? history.map(h => `
+      <div class="history-item">
+        <div class="history-dot"></div>
+        <div class="history-body">
+          <div class="history-action">${h.action} ${h.changed_by_name ? `by ${escapeHtml(h.changed_by_name)}` : ''}</div>
+          <div class="history-meta">${timeAgo(h.created_at)}</div>
+          ${h.reason ? `<div class="history-reason">"${escapeHtml(h.reason)}"</div>` : ''}
+        </div>
+      </div>`).join('') : '<div class="table-empty">No history yet</div>'}
+  `;
+  document.getElementById('viewOverlay').classList.add('show');
+  document.getElementById('viewModal').classList.add('show');
+}
+function closeViewModal() {
+  document.getElementById('viewOverlay').classList.remove('show');
+  document.getElementById('viewModal').classList.remove('show');
+}
+
+// ---------- DELETE WITH REASON ----------
+let pendingDeleteId = null;
+function askDeleteQuote(id) {
+  pendingDeleteId = id;
+  document.getElementById('deleteReasonInput').value = '';
+  document.getElementById('deleteReasonError').style.display = 'none';
+  document.getElementById('deleteOverlay').classList.add('show');
+  document.getElementById('deleteModal').classList.add('show');
+}
+function closeDeleteModal() {
+  document.getElementById('deleteOverlay').classList.remove('show');
+  document.getElementById('deleteModal').classList.remove('show');
+}
+document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+  const reason = document.getElementById('deleteReasonInput').value.trim();
+  if (!reason) { document.getElementById('deleteReasonError').style.display = 'block'; return; }
+  try {
+    await api(`/quotes/${pendingDeleteId}`, { method: 'DELETE', body: JSON.stringify({ reason }) });
+    closeDeleteModal();
+    loadQuotes();
+    loadSummary();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
+}
+
+loadSummary();
+loadQuotes();
+</script>
+</body>
+</html>

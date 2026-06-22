@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Get a Quote | Nilecrest Holdings</title>
+<link rel="icon" href="assets/images/logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<div class="nav">
+  <a href="index.html" class="nav-logo-link">
+    <img src="assets/images/logo.png" class="nav-logo-img" alt="Nilecrest Holdings - Logistics, Transport, Construction">
+  </a>
+  <div class="nav-links">
+    <a href="about.html">About</a>
+    <a href="services.html">Services</a>
+    <a href="projects.html">Projects</a>
+    <a href="fleet.html">Fleet</a>
+    <a href="contact.html">Contact</a>
+  </div>
+  <a href="quote.html"><button class="nav-cta">Get a Quote</button></a>
+</div>
+
+<div class="page-header">
+  <img src="assets/images/watermark-light.png" class="page-header-watermark" alt="">
+  <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span class="current">Get a Quote</span></div>
+  <h1>Tell us what you <em>need moved or built</em></h1>
+  <p>Fill in the details below and our team will respond within 24 hours with a quote and next steps.</p>
+</div>
+
+<div class="section">
+  <div id="formMsg" class="public-form-msg"></div>
+
+  <form class="public-form" id="quoteForm">
+    <div class="public-form-row">
+      <div class="public-form-group">
+        <label class="public-form-label">Full Name *</label>
+        <input type="text" class="public-form-input" id="fName" placeholder="e.g. James Kariuki" required>
+      </div>
+      <div class="public-form-group">
+        <label class="public-form-label">Company (optional)</label>
+        <input type="text" class="public-form-input" id="fCompany" placeholder="e.g. Kenya Breweries Ltd">
+      </div>
+    </div>
+    <div class="public-form-row">
+      <div class="public-form-group">
+        <label class="public-form-label">Email Address *</label>
+        <input type="email" class="public-form-input" id="fEmail" placeholder="you@company.com" required>
+      </div>
+      <div class="public-form-group">
+        <label class="public-form-label">Phone Number</label>
+        <input type="text" class="public-form-input" id="fPhone" placeholder="+254 ...">
+      </div>
+    </div>
+    <div class="public-form-group">
+      <label class="public-form-label">Service Needed *</label>
+      <select class="public-form-input" id="fService" required>
+        <option value="">Select a service</option>
+        <option value="Logistics">Logistics &amp; Freight</option>
+        <option value="Transport">Transport Solutions</option>
+        <option value="Construction">Civil Construction</option>
+      </select>
+    </div>
+    <div class="public-form-row">
+      <div class="public-form-group">
+        <label class="public-form-label">Pickup / Origin (if applicable)</label>
+        <input type="text" class="public-form-input" id="fOrigin" placeholder="e.g. Mombasa">
+      </div>
+      <div class="public-form-group">
+        <label class="public-form-label">Destination (if applicable)</label>
+        <input type="text" class="public-form-input" id="fDestination" placeholder="e.g. Nairobi">
+      </div>
+    </div>
+    <div class="public-form-group">
+      <label class="public-form-label">Tell us about the job *</label>
+      <textarea class="public-form-input" id="fDescription" rows="4" placeholder="Describe the scope, timelines, quantities, or anything else we should know." required></textarea>
+    </div>
+    <button type="submit" class="public-form-submit" id="submitBtn"><i class="ti ti-send" aria-hidden="true"></i> Submit Quote Request</button>
+  </form>
+</div>
+
+<div class="footer">
+  <div class="footer-top">
+    <div>
+      <div class="footer-brand">NILE<em>CREST</em> HOLDINGS</div>
+      <div class="footer-tagline">Logistics &middot; Transport &middot; Construction<br>Delivering excellence across East Africa.</div>
+      <div class="footer-contacts">
+        <div class="footer-contact"><i class="ti ti-phone" aria-hidden="true"></i> +254 11 0500712</div>
+        <div class="footer-contact"><i class="ti ti-mail" aria-hidden="true"></i> Nilecrest@gmail.com</div>
+        <div class="footer-contact"><i class="ti ti-map-pin" aria-hidden="true"></i> Nairobi Kenya, PO BOX 0,00100</div>
+      </div>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Services</div>
+      <a href="services.html">Logistics &amp; Freight</a>
+      <a href="services.html">Transport Solutions</a>
+      <a href="services.html">Civil Construction</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Company</div>
+      <a href="about.html">About Us</a>
+      <a href="projects.html">Projects</a>
+      <a href="fleet.html">Fleet</a>
+      <a href="contact.html">Contact</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">&copy; 2026 Nilecrest Holdings Ltd. All rights reserved.</div>
+    <a href="https://wa.me/254110500712" target="_blank"><button class="wa-btn"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i> WhatsApp Us</button></a>
+  </div>
+</div>
+
+<script>
+document.getElementById('quoteForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('formMsg');
+  const btn = document.getElementById('submitBtn');
+
+  const payload = {
+    client_name: document.getElementById('fName').value.trim(),
+    company: document.getElementById('fCompany').value.trim(),
+    client_email: document.getElementById('fEmail').value.trim(),
+    client_phone: document.getElementById('fPhone').value.trim(),
+    service_type: document.getElementById('fService').value,
+    origin: document.getElementById('fOrigin').value.trim(),
+    destination: document.getElementById('fDestination').value.trim(),
+    description: document.getElementById('fDescription').value.trim(),
+  };
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader-2" aria-hidden="true"></i> Submitting...';
+
+  try {
+    const res = await fetch('/api/quotes/public', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || 'Something went wrong. Please try again.');
+
+    msg.className = 'public-form-msg success';
+    msg.innerHTML = `<i class="ti ti-circle-check" aria-hidden="true"></i> Thank you! Your request <strong>${data.ref_number}</strong> has been received. We'll be in touch within 24 hours.`;
+    msg.style.display = 'flex';
+    document.getElementById('quoteForm').reset();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err) {
+    msg.className = 'public-form-msg error';
+    msg.innerHTML = `<i class="ti ti-alert-circle" aria-hidden="true"></i> ${err.message}`;
+    msg.style.display = 'flex';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-send" aria-hidden="true"></i> Submit Quote Request';
+  }
+});
+</script>
+
+</body>
+</html>

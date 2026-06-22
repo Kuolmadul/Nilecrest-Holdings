@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login | Nilecrest Holdings</title>
+<link rel="icon" href="../assets/images/logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter',sans-serif; background:#F0F2F8; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+a { text-decoration:none; }
+
+.login-wrap {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  max-width:860px;
+  width:100%;
+  background:#fff;
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,0.1);
+  min-height:500px;
+}
+
+/* LEFT PANEL */
+.login-left {
+  background:#1B2A5E;
+  padding:40px 36px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  position:relative;
+  overflow:hidden;
+}
+.login-left::before {
+  content:'';
+  position:absolute;
+  bottom:-80px; right:-80px;
+  width:300px; height:300px;
+  border-radius:50%;
+  background:rgba(232,92,26,0.12);
+  pointer-events:none;
+}
+.login-left::after {
+  content:'';
+  position:absolute;
+  top:-60px; left:-60px;
+  width:200px; height:200px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.04);
+  pointer-events:none;
+}
+.login-logo { height:40px; width:auto; position:relative; z-index:1; }
+.login-tagline {
+  position:relative; z-index:1;
+}
+.login-tagline h2 { font-size:22px; font-weight:600; color:#fff; line-height:1.35; margin-bottom:10px; }
+.login-tagline h2 em { color:#E85C1A; font-style:normal; }
+.login-tagline p { font-size:12.5px; color:rgba(255,255,255,0.5); line-height:1.65; }
+.login-stats { display:flex; gap:20px; position:relative; z-index:1; }
+.ls { }
+.ls-num { font-size:20px; font-weight:700; color:#E85C1A; }
+.ls-lbl { font-size:10px; color:rgba(255,255,255,0.4); margin-top:1px; }
+
+/* RIGHT PANEL */
+.login-right {
+  padding:40px 36px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:22px;
+}
+.login-eyebrow { font-size:10px; font-weight:600; color:#E85C1A; text-transform:uppercase; letter-spacing:2px; }
+.login-heading { font-size:22px; font-weight:700; color:#1B2A5E; margin-top:4px; }
+.login-sub { font-size:12.5px; color:#64748b; line-height:1.6; }
+
+.login-form { display:flex; flex-direction:column; gap:14px; }
+.form-group { display:flex; flex-direction:column; gap:5px; }
+.form-label { font-size:11px; font-weight:600; color:#64748b; letter-spacing:0.5px; text-transform:uppercase; }
+.input-wrap { position:relative; }
+.input-wrap i { position:absolute; left:11px; top:50%; transform:translateY(-50%); font-size:16px; color:#94a3b8; pointer-events:none; }
+.form-input {
+  width:100%;
+  padding:10px 12px 10px 36px;
+  border:0.5px solid #e2e6f0;
+  border-radius:7px;
+  font-size:13px;
+  font-family:'Inter',sans-serif;
+  color:#1e293b;
+  outline:none;
+  transition:border-color 0.15s;
+}
+.form-input:focus { border-color:#1B2A5E; }
+.form-input::placeholder { color:#b0bec5; }
+
+.form-row-check { display:flex; align-items:center; justify-content:space-between; }
+.check-wrap { display:flex; align-items:center; gap:7px; cursor:pointer; }
+.check-wrap input { accent-color:#1B2A5E; width:14px; height:14px; }
+.check-wrap span { font-size:12.5px; color:#64748b; }
+.forgot-link { font-size:12px; color:#E85C1A; }
+.forgot-link:hover { text-decoration:underline; }
+
+.login-btn {
+  background:#1B2A5E;
+  color:#fff;
+  font-size:13.5px;
+  font-weight:600;
+  padding:11px;
+  border-radius:7px;
+  border:none;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  transition:background 0.15s;
+}
+.login-btn:hover { background:#142245; }
+.login-btn i { font-size:16px; }
+
+.back-link {
+  text-align:center;
+  font-size:12px;
+  color:#94a3b8;
+}
+.back-link a { color:#1B2A5E; font-weight:500; }
+.back-link a:hover { color:#E85C1A; }
+
+.login-divider { display:flex; align-items:center; gap:10px; }
+.login-divider::before, .login-divider::after { content:''; flex:1; height:0.5px; background:#e2e6f0; }
+.login-divider span { font-size:11px; color:#94a3b8; }
+
+.error-msg { background:#fee2e2; color:#b91c1c; font-size:12px; padding:10px 12px; border-radius:6px; display:none; align-items:center; gap:7px; }
+.error-msg.show { display:flex; }
+
+@media (max-width:640px) {
+  .login-wrap { grid-template-columns:1fr; }
+  .login-left { display:none; }
+  .login-right { padding:32px 28px; }
+}
+</style>
+</head>
+<body>
+
+<div class="login-wrap">
+  <!-- LEFT -->
+  <div class="login-left">
+    <img src="../assets/images/logo.png" alt="Nilecrest Holdings" class="login-logo">
+    <div class="login-tagline">
+      <h2>Manage your <em>operations</em> from one place.</h2>
+      <p>Quotes, projects, fleet, invoices and clients -- all in the Nilecrest admin panel.</p>
+    </div>
+    <div class="login-stats">
+      <div class="ls"><div class="ls-num">47</div><div class="ls-lbl">Fleet Vehicles</div></div>
+      <div class="ls"><div class="ls-num">200+</div><div class="ls-lbl">Projects Done</div></div>
+      <div class="ls"><div class="ls-num">5</div><div class="ls-lbl">Countries</div></div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="login-right">
+    <div>
+      <div class="login-eyebrow">Admin Portal</div>
+      <div class="login-heading">Sign in</div>
+      <div class="login-sub" style="margin-top:6px;">Enter your credentials to access the admin dashboard.</div>
+    </div>
+
+    <div class="error-msg" id="errorMsg">
+      <i class="ti ti-alert-circle"></i> Invalid email or password. Please try again.
+    </div>
+
+    <div class="login-form">
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <div class="input-wrap">
+          <i class="ti ti-mail"></i>
+          <input type="email" class="form-input" id="email" placeholder="admin@nilecrest.com">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="input-wrap">
+          <i class="ti ti-lock"></i>
+          <input type="password" class="form-input" id="password" placeholder="••••••••">
+        </div>
+      </div>
+      <div class="form-row-check">
+        <label class="check-wrap">
+          <input type="checkbox" id="remember">
+          <span>Remember me</span>
+        </label>
+        <a href="#" class="forgot-link">Forgot password?</a>
+      </div>
+      <button class="login-btn" onclick="handleLogin()">
+        <i class="ti ti-login"></i> Sign In to Dashboard
+      </button>
+    </div>
+
+    <div class="back-link">
+      <a href="../index.html"><i class="ti ti-arrow-left" style="font-size:12px;"></i> Back to main website</a>
+    </div>
+  </div>
+</div>
+
+<script>
+async function handleLogin() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const errorMsg = document.getElementById('errorMsg');
+
+  if (!email || !password) {
+    errorMsg.querySelector ? null : null;
+    errorMsg.lastChild.textContent = ' Please enter both email and password.';
+    errorMsg.classList.add('show');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/auth/staff/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      errorMsg.lastChild.textContent = ' ' + (data.error || 'Invalid email or password. Please try again.');
+      errorMsg.classList.add('show');
+      return;
+    }
+
+    localStorage.setItem('nch_staff_token', data.token);
+    localStorage.setItem('nch_staff', JSON.stringify(data.staff));
+    errorMsg.classList.remove('show');
+    window.location.href = '../admin/index.html';
+  } catch (err) {
+    errorMsg.lastChild.textContent = ' Could not reach the server. Please try again.';
+    errorMsg.classList.add('show');
+  }
+}
+document.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+
+// If already logged in, skip straight to the dashboard
+if (localStorage.getItem('nch_staff_token')) {
+  window.location.href = '../admin/index.html';
+}
+</script>
+
+</body>
+</html>

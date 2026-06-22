@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard | Nilecrest Holdings</title>
+<link rel="icon" href="../assets/images/logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<div id="sidebarMount"></div>
+
+<div class="main-wrap">
+
+  <header class="topbar">
+    <button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+      <i class="ti ti-menu-2"></i>
+    </button>
+    <div class="topbar-title">Dashboard</div>
+    <div class="topbar-right">
+      <a href="../index.html" target="_blank" class="topbar-link"><i class="ti ti-external-link"></i> View Site</a>
+      <div class="topbar-notif"><i class="ti ti-bell"></i><span class="notif-dot"></span></div>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <div class="page-heading">
+      <div>
+        <div class="page-title" id="greeting">Good morning</div>
+        <div class="page-sub">Here's what's happening at Nilecrest Holdings today.</div>
+      </div>
+      <a href="quotes.html"><button class="btn-primary"><i class="ti ti-plus"></i> New Quote</button></a>
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card"><div class="stat-icon orange"><i class="ti ti-file-text"></i></div>
+        <div class="stat-info"><div class="stat-val" id="statQuotes">-</div><div class="stat-lbl">Total Quotes</div></div>
+      </div>
+      <div class="stat-card"><div class="stat-icon navy"><i class="ti ti-building-skyscraper"></i></div>
+        <div class="stat-info"><div class="stat-val" id="statProjects">-</div><div class="stat-lbl">Active Projects</div></div>
+      </div>
+      <div class="stat-card"><div class="stat-icon green"><i class="ti ti-truck"></i></div>
+        <div class="stat-info"><div class="stat-val" id="statFleet">-</div><div class="stat-lbl" id="statFleetLbl">Fleet Vehicles</div></div>
+      </div>
+      <div class="stat-card"><div class="stat-icon purple"><i class="ti ti-receipt"></i></div>
+        <div class="stat-info"><div class="stat-val" id="statRevenue">-</div><div class="stat-lbl">Revenue (Total)</div></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Recent Quotes</div>
+          <a href="quotes.html" class="card-link">View all <i class="ti ti-arrow-right"></i></a>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Client</th><th>Service</th><th>Date</th><th>Status</th></tr></thead>
+          <tbody id="recentQuotesBody">
+            <tr><td colspan="4" class="table-loading">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Active Projects</div>
+          <a href="projects.html" class="card-link">View all <i class="ti ti-arrow-right"></i></a>
+        </div>
+        <div class="project-list" id="activeProjectsList">
+          <div class="table-loading">Loading...</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="grid-3">
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Fleet Status</div>
+          <a href="fleet.html" class="card-link">Manage <i class="ti ti-arrow-right"></i></a>
+        </div>
+        <div class="fleet-status-list" id="fleetStatusList">
+          <div class="table-loading">Loading...</div>
+        </div>
+        <div class="fleet-bar-wrap" id="fleetBarWrap"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Recent Invoices</div>
+          <a href="invoices.html" class="card-link">View all <i class="ti ti-arrow-right"></i></a>
+        </div>
+        <div class="invoice-list" id="recentInvoicesList">
+          <div class="table-loading">Loading...</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="card-title">Quick Actions</div></div>
+        <div class="quick-actions">
+          <a href="quotes.html?new=1" class="qa-btn"><i class="ti ti-file-plus"></i><span>New Quote</span></a>
+          <a href="projects.html?new=1" class="qa-btn"><i class="ti ti-building-skyscraper"></i><span>Add Project</span></a>
+          <a href="fleet.html?new=1" class="qa-btn"><i class="ti ti-truck"></i><span>Add Vehicle</span></a>
+          <a href="invoices.html?new=1" class="qa-btn"><i class="ti ti-receipt"></i><span>Create Invoice</span></a>
+          <a href="clients.html" class="qa-btn"><i class="ti ti-user-plus"></i><span>View Clients</span></a>
+          <a href="users.html" class="qa-btn" data-admin-only><i class="ti ti-user-cog"></i><span>Manage Users</span></a>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/department-config.js"></script>
+<script src="../assets/js/sidebar.js"></script>
+<script>
+requireLogin();
+renderSidebar('dashboard');
+applyDepartmentTheme();
+document.querySelector('.page-sub').textContent = deptCfgIsAdmin()
+  ? "Here's what's happening at Nilecrest Holdings today."
+  : `Here's what's happening in ${getDepartmentConfig().label} today.`;
+document.getElementById('statFleetLbl').textContent = getDepartmentConfig().fleetLabel;
+function deptCfgIsAdmin() {
+  const staff = JSON.parse(localStorage.getItem('nch_staff') || 'null');
+  return !staff || staff.role === 'admin';
+}
+
+const hour = new Date().getHours();
+document.getElementById('greeting').textContent =
+  (hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening') + ', ' + (getStaff()?.name?.split(' ')[0] || 'Admin');
+
+const statusPillClass = { Pending: 'pill-pending', 'In Review': 'pill-review', Won: 'pill-won', Lost: 'pill-lost' };
+
+async function loadDashboard() {
+  try {
+    const [quoteSummary, projectSummary, fleetSummary, invoiceSummary, quotesList, projectsList, fleetList, invoicesList] = await Promise.all([
+      api('/quotes/summary'),
+      api('/projects/summary'),
+      api('/fleet/summary'),
+      api('/invoices/summary'),
+      api('/quotes?limit=5'),
+      api('/projects?status=ongoing'),
+      api('/fleet?limit=100'),
+      api('/invoices?limit=4'),
+    ]);
+
+    const totalQuotes = Object.values(quoteSummary).reduce((a, b) => a + b, 0);
+    document.getElementById('statQuotes').textContent = totalQuotes;
+    document.getElementById('statProjects').textContent = projectSummary.ongoing;
+    document.getElementById('statFleet').textContent = fleetSummary.total;
+    document.getElementById('statRevenue').textContent = formatMoney(invoiceSummary.total_value);
+
+    // Recent quotes table
+    const qBody = document.getElementById('recentQuotesBody');
+    qBody.innerHTML = quotesList.rows.length
+      ? quotesList.rows.map(q => `
+        <tr>
+          <td><span class="td-name">${escapeHtml(q.client_name)}</span></td>
+          <td>${escapeHtml(q.service_type)}</td>
+          <td>${formatDate(q.created_at)}</td>
+          <td><span class="pill ${statusPillClass[q.status] || ''}">${q.status}</span></td>
+        </tr>`).join('')
+      : `<tr><td colspan="4" class="table-empty">No quotes yet</td></tr>`;
+
+    // Active projects
+    const pList = document.getElementById('activeProjectsList');
+    pList.innerHTML = projectsList.rows.length
+      ? projectsList.rows.slice(0, 4).map(p => `
+        <div class="proj-item">
+          <div class="proj-icon"><i class="ti ti-building"></i></div>
+          <div class="proj-body">
+            <div class="proj-name">${escapeHtml(p.title)}</div>
+            <div class="proj-meta">${escapeHtml(p.department_name || '')} &middot; ${escapeHtml(p.location || '')}</div>
+            <div class="progress-wrap"><div class="progress-bar" style="width:${p.progress_pct}%"></div></div>
+            <div class="proj-pct">${p.progress_pct}% complete</div>
+          </div>
+        </div>`).join('')
+      : `<div class="table-empty">No active projects</div>`;
+
+    // Fleet status
+    const fStatus = { active: 0, maintenance: 0, standby: 0, out_of_service: 0 };
+    fleetList.rows.forEach(v => { fStatus[v.status] = (fStatus[v.status] || 0) + 1; });
+    const fList = document.getElementById('fleetStatusList');
+    fList.innerHTML = `
+      <div class="fleet-status-item"><div class="fleet-dot green"></div><div class="fleet-label">Active / On Road</div><div class="fleet-count">${fStatus.active}</div></div>
+      <div class="fleet-status-item"><div class="fleet-dot orange"></div><div class="fleet-label">In Maintenance</div><div class="fleet-count">${fStatus.maintenance}</div></div>
+      <div class="fleet-status-item"><div class="fleet-dot grey"></div><div class="fleet-label">Standby / Idle</div><div class="fleet-count">${fStatus.standby}</div></div>
+      <div class="fleet-status-item"><div class="fleet-dot red"></div><div class="fleet-label">Out of Service</div><div class="fleet-count">${fStatus.out_of_service}</div></div>`;
+    const total = fleetSummary.total || 1;
+    document.getElementById('fleetBarWrap').innerHTML = `
+      <div class="fleet-bar" style="width:${fStatus.active/total*100}%; background:#22c55e"></div>
+      <div class="fleet-bar" style="width:${fStatus.maintenance/total*100}%; background:#E85C1A"></div>
+      <div class="fleet-bar" style="width:${fStatus.standby/total*100}%; background:#94a3b8"></div>
+      <div class="fleet-bar" style="width:${fStatus.out_of_service/total*100}%; background:#ef4444"></div>`;
+
+    // Recent invoices
+    const iList = document.getElementById('recentInvoicesList');
+    iList.innerHTML = invoicesList.rows.length
+      ? invoicesList.rows.map(inv => `
+        <div class="invoice-item">
+          <div class="invoice-num">${escapeHtml(inv.invoice_number)}</div>
+          <div class="invoice-client">${escapeHtml(inv.client_name)}</div>
+          <div class="invoice-amt">${formatMoney(inv.amount)}</div>
+          <span class="pill ${inv.status === 'Paid' ? 'pill-won' : inv.status === 'Partial' ? 'pill-review' : 'pill-pending'}">${inv.status}</span>
+        </div>`).join('')
+      : `<div class="table-empty">No invoices yet</div>`;
+
+    if (getStaff()?.role !== 'admin') {
+      document.querySelectorAll('[data-admin-only]').forEach(el => el.style.display = 'none');
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
+}
+
+loadDashboard();
+</script>
+
+</body>
+</html>
