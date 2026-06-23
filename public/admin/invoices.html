@@ -71,7 +71,7 @@
     <div class="form-group"><label class="form-label">Client Name</label><input type="text" class="form-input" id="fClientName" placeholder="e.g. Kenya Breweries Ltd"></div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Amount (KSh)</label><input type="number" class="form-input" id="fAmount" placeholder="0"></div>
-      <div class="form-group"><label class="form-label">Amount Paid (KSh)</label><input type="number" class="form-input" id="fAmountPaid" placeholder="0"></div>
+      <div class="form-group"><label class="form-label">Amount Paid (KSh)</label><input type="number" class="form-input" id="fAmountPaid" placeholder="0" disabled style="background:#f6f7fb;color:#94a3b8;"></div>
     </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Due Date</label><input type="date" class="form-input" id="fDueDate"></div>
@@ -83,6 +83,7 @@
         </select>
       </div>
     </div>
+    <div style="font-size:11.5px;color:#94a3b8;">Amount Paid updates automatically from recorded payments. Use the cash icon in the table to record a payment.</div>
   </div>
   <div class="modal-footer"><button class="btn-outline" onclick="closeModal()">Cancel</button><button class="btn-primary" id="saveInvoiceBtn"><i class="ti ti-device-floppy"></i> Save Invoice</button></div>
 </div>
@@ -96,6 +97,37 @@
     <div class="reason-error" id="deleteReasonError">A reason is required.</div>
   </div>
   <div class="reason-modal-footer"><button class="btn-outline" onclick="closeDeleteModal()">Cancel</button><button class="btn-primary" style="background:#ef4444;" id="confirmDeleteBtn">Delete invoice</button></div>
+</div>
+
+<!-- RECORD PAYMENT MODAL -->
+<div class="modal-overlay" id="paymentOverlay" onclick="closePaymentModal()"></div>
+<div class="modal" id="paymentModal" style="width:min(480px,95vw);">
+  <div class="modal-head"><div class="modal-title">Record a payment</div><button class="modal-close" onclick="closePaymentModal()"><i class="ti ti-x"></i></button></div>
+  <div class="modal-body">
+    <input type="hidden" id="paymentInvoiceId">
+    <div class="form-group">
+      <label class="form-label">Payment Method</label>
+      <select class="form-input" id="pMethod">
+        <option value="mpesa">M-Pesa</option>
+        <option value="bank_transfer">Bank Transfer</option>
+        <option value="cash">Cash</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Amount (KSh)</label><input type="number" class="form-input" id="pAmount" placeholder="0"></div>
+    <div class="form-group" id="pMpesaGroup"><label class="form-label">M-Pesa Receipt Code</label><input type="text" class="form-input" id="pMpesaReceipt" placeholder="e.g. QGH7XJKL9P"></div>
+    <div class="form-group" id="pBankGroup" style="display:none;"><label class="form-label">Bank Reference / Slip No.</label><input type="text" class="form-input" id="pBankReference" placeholder="e.g. FT2026061234567"></div>
+    <div class="form-group"><label class="form-label">Notes (optional)</label><textarea class="form-input" id="pNotes" rows="2" placeholder="Any additional detail..."></textarea></div>
+    <div class="reason-error" id="paymentError" style="display:none;"></div>
+  </div>
+  <div class="modal-footer"><button class="btn-outline" onclick="closePaymentModal()">Cancel</button><button class="btn-primary" id="savePaymentBtn"><i class="ti ti-device-floppy"></i> Record Payment</button></div>
+</div>
+
+<!-- PAYMENT HISTORY MODAL -->
+<div class="modal-overlay" id="historyOverlay" onclick="closeHistoryModal()"></div>
+<div class="modal" id="historyModal" style="width:min(560px,95vw);">
+  <div class="modal-head"><div class="modal-title">Payment history</div><button class="modal-close" onclick="closeHistoryModal()"><i class="ti ti-x"></i></button></div>
+  <div class="modal-body" id="historyModalBody"></div>
+  <div class="modal-footer"><button class="btn-outline" onclick="closeHistoryModal()">Close</button></div>
 </div>
 
 <style>
@@ -158,6 +190,9 @@ async function loadInvoices() {
         <td style="color:var(--text-2);">${formatDate(inv.due_date)}</td>
         <td><span class="pill ${statusPill[inv.status]}">${inv.status}</span></td>
         <td><div class="action-btns">
+          <button class="action-btn" title="Copy Payment Link" onclick="copyPaymentLink(${inv.id})"><i class="ti ti-link"></i></button>
+          <button class="action-btn" title="Record Payment" onclick="openPaymentModal(${inv.id})"><i class="ti ti-cash-banknote"></i></button>
+          <button class="action-btn" title="Payment History" onclick="viewPayments(${inv.id})"><i class="ti ti-history"></i></button>
           <button class="action-btn" title="Edit" onclick="editInvoice(${inv.id})"><i class="ti ti-pencil"></i></button>
           <button class="action-btn danger" title="Delete" onclick="askDeleteInvoice(${inv.id})"><i class="ti ti-trash"></i></button>
         </div></td>
@@ -202,7 +237,6 @@ document.getElementById('saveInvoiceBtn').addEventListener('click', async () => 
   try {
     if (id) {
       await api(`/invoices/${id}`, { method: 'PUT', body: JSON.stringify({
-        amount_paid: document.getElementById('fAmountPaid').value,
         status: document.getElementById('fStatus').value,
         due_date: document.getElementById('fDueDate').value || null,
       })});
@@ -242,6 +276,99 @@ document.getElementById('confirmDeleteBtn').addEventListener('click', async () =
     loadSummary();
   } catch (err) { alert(err.message); }
 });
+
+// ---------- COPY PAYMENT LINK ----------
+function copyPaymentLink(invoiceId) {
+  const url = `${window.location.origin}/pay.html?id=${invoiceId}`;
+  navigator.clipboard.writeText(url).then(() => {
+    alert(`Payment link copied:\n${url}`);
+  }).catch(() => {
+    prompt('Copy this payment link:', url);
+  });
+}
+
+// ---------- RECORD PAYMENT ----------
+function openPaymentModal(invoiceId) {
+  document.getElementById('paymentInvoiceId').value = invoiceId;
+  document.getElementById('pMethod').value = 'mpesa';
+  document.getElementById('pAmount').value = '';
+  document.getElementById('pMpesaReceipt').value = '';
+  document.getElementById('pBankReference').value = '';
+  document.getElementById('pNotes').value = '';
+  document.getElementById('paymentError').style.display = 'none';
+  togglePaymentFields();
+  document.getElementById('paymentOverlay').classList.add('show');
+  document.getElementById('paymentModal').classList.add('show');
+}
+function closePaymentModal() {
+  document.getElementById('paymentOverlay').classList.remove('show');
+  document.getElementById('paymentModal').classList.remove('show');
+}
+function togglePaymentFields() {
+  const method = document.getElementById('pMethod').value;
+  document.getElementById('pMpesaGroup').style.display = method === 'mpesa' ? '' : 'none';
+  document.getElementById('pBankGroup').style.display = method === 'bank_transfer' ? '' : 'none';
+}
+document.getElementById('pMethod').addEventListener('change', togglePaymentFields);
+
+document.getElementById('savePaymentBtn').addEventListener('click', async () => {
+  const invoiceId = document.getElementById('paymentInvoiceId').value;
+  const method = document.getElementById('pMethod').value;
+  const amount = document.getElementById('pAmount').value;
+  const errorEl = document.getElementById('paymentError');
+
+  if (!amount || Number(amount) <= 0) {
+    errorEl.textContent = 'Enter a valid amount.';
+    errorEl.style.display = 'block';
+    return;
+  }
+  const bankReference = document.getElementById('pBankReference').value.trim();
+  if (method === 'bank_transfer' && !bankReference) {
+    errorEl.textContent = 'A bank reference or slip number is required for bank transfers.';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  try {
+    await api(`/invoices/${invoiceId}/payments`, {
+      method: 'POST',
+      body: JSON.stringify({
+        amount,
+        method,
+        mpesa_receipt: document.getElementById('pMpesaReceipt').value.trim() || null,
+        bank_reference: bankReference || null,
+        notes: document.getElementById('pNotes').value.trim() || null,
+      }),
+    });
+    closePaymentModal();
+    loadInvoices();
+    loadSummary();
+  } catch (err) {
+    errorEl.textContent = err.message;
+    errorEl.style.display = 'block';
+  }
+});
+
+// ---------- PAYMENT HISTORY ----------
+const paymentMethodLabel = { mpesa: 'M-Pesa', bank_transfer: 'Bank Transfer', cash: 'Cash' };
+async function viewPayments(invoiceId) {
+  const { payments } = await api(`/invoices/${invoiceId}/payments`);
+  document.getElementById('historyModalBody').innerHTML = payments.length ? payments.map(p => `
+    <div class="history-item">
+      <div class="history-dot"></div>
+      <div class="history-body">
+        <div class="history-action">${formatMoney(p.amount)} via ${paymentMethodLabel[p.method] || p.method} ${p.recorded_by_name ? `&middot; recorded by ${escapeHtml(p.recorded_by_name)}` : ''}</div>
+        <div class="history-meta">${timeAgo(p.created_at)}${p.mpesa_receipt ? ` &middot; Receipt: ${escapeHtml(p.mpesa_receipt)}` : ''}${p.bank_reference ? ` &middot; Ref: ${escapeHtml(p.bank_reference)}` : ''}</div>
+        ${p.notes ? `<div class="history-reason">"${escapeHtml(p.notes)}"</div>` : ''}
+      </div>
+    </div>`).join('') : '<div class="table-empty">No payments recorded yet</div>';
+  document.getElementById('historyOverlay').classList.add('show');
+  document.getElementById('historyModal').classList.add('show');
+}
+function closeHistoryModal() {
+  document.getElementById('historyOverlay').classList.remove('show');
+  document.getElementById('historyModal').classList.remove('show');
+}
 
 function escapeHtml(str) {
   const div = document.createElement('div');

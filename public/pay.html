@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pay Invoice | Nilecrest Holdings</title>
+<link rel="icon" href="assets/images/logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<div class="nav">
+  <a href="index.html" class="nav-logo-link">
+    <img src="assets/images/logo.png" class="nav-logo-img" alt="Nilecrest Holdings - Logistics, Transport, Construction">
+  </a>
+  <div class="nav-links">
+    <a href="about.html">About</a>
+    <a href="services.html">Services</a>
+    <a href="projects.html">Projects</a>
+    <a href="fleet.html">Fleet</a>
+    <a href="contact.html">Contact</a>
+  </div>
+  <button class="nav-toggle" id="navToggle" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+  <a href="quote.html"><button class="nav-cta">Get a Quote</button></a>
+</div>
+
+<div class="page-header">
+  <img src="assets/images/watermark-light.png" class="page-header-watermark" alt="">
+  <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span class="current">Pay Invoice</span></div>
+  <h1>Pay your <em>invoice</em></h1>
+  <p>Settle your invoice securely via M-Pesa or bank transfer.</p>
+</div>
+
+<div class="section" style="max-width:560px;margin:0 auto;">
+  <div id="loadingMsg" style="text-align:center;color:#94a3b8;font-size:13px;padding:30px 0;">Loading invoice...</div>
+  <div id="errorMsg" class="public-form-msg error" style="display:none;"></div>
+
+  <div id="invoiceCard" style="display:none;">
+    <div style="background:#fff;border:0.5px solid #e2e6f0;border-radius:12px;padding:24px;margin-bottom:24px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;">
+        <div>
+          <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">Invoice</div>
+          <div style="font-size:18px;font-weight:600;color:#1B2A5E;" id="invNumber">-</div>
+        </div>
+        <span id="invStatusPill" style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;"></span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:13px;">
+        <div><div style="color:#94a3b8;font-size:11px;">Billed to</div><div id="invClient" style="font-weight:500;color:#1e293b;">-</div></div>
+        <div><div style="color:#94a3b8;font-size:11px;">Due date</div><div id="invDue" style="font-weight:500;color:#1e293b;">-</div></div>
+        <div><div style="color:#94a3b8;font-size:11px;">Total amount</div><div id="invAmount" style="font-weight:500;color:#1e293b;">-</div></div>
+        <div><div style="color:#94a3b8;font-size:11px;">Already paid</div><div id="invPaid" style="font-weight:500;color:#1e293b;">-</div></div>
+      </div>
+      <div style="margin-top:16px;padding-top:16px;border-top:0.5px solid #e2e6f0;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:13px;color:#64748b;">Outstanding balance</span>
+        <span id="invOutstanding" style="font-size:20px;font-weight:700;color:#E85C1A;">-</span>
+      </div>
+    </div>
+
+    <div id="paidNotice" style="display:none;background:#f0fdf4;border:0.5px solid #bbf7d0;border-radius:10px;padding:16px;text-align:center;color:#166534;font-size:13.5px;margin-bottom:24px;">
+      <i class="ti ti-circle-check" aria-hidden="true" style="font-size:20px;"></i><br>This invoice is fully paid. Thank you!
+    </div>
+
+    <div id="paymentOptions">
+      <!-- M-PESA -->
+      <div style="background:#fff;border:0.5px solid #e2e6f0;border-radius:12px;padding:20px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <i class="ti ti-phone" style="color:#16a34a;font-size:18px;" aria-hidden="true"></i>
+          <span style="font-weight:600;color:#1B2A5E;font-size:14px;">Pay with M-Pesa</span>
+        </div>
+        <p style="font-size:12.5px;color:#64748b;margin-bottom:12px;">Enter the phone number to receive the M-Pesa PIN prompt on.</p>
+        <div class="public-form-group">
+          <input type="text" class="public-form-input" id="mpesaPhone" placeholder="e.g. 0712 345 678">
+        </div>
+        <button class="public-form-submit" id="mpesaPayBtn" style="margin-top:8px;"><i class="ti ti-send" aria-hidden="true"></i> Send Payment Request</button>
+        <div id="mpesaStatus" style="font-size:12.5px;margin-top:10px;display:none;"></div>
+      </div>
+
+      <!-- BANK TRANSFER -->
+      <div style="background:#fff;border:0.5px solid #e2e6f0;border-radius:12px;padding:20px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <i class="ti ti-building-bank" style="color:#1B2A5E;font-size:18px;" aria-hidden="true"></i>
+          <span style="font-weight:600;color:#1B2A5E;font-size:14px;">Pay by Bank Transfer</span>
+        </div>
+        <p style="font-size:12.5px;color:#64748b;margin-bottom:10px;">Transfer the outstanding balance to the account below, using your invoice number as the payment reference.</p>
+        <div style="background:#f8fafc;border-radius:8px;padding:14px;font-size:13px;line-height:1.7;margin-bottom:14px;">
+          <div><strong>Bank:</strong> <span id="bankName">-</span></div>
+          <div><strong>Account Name:</strong> Nilecrest Holdings Ltd</div>
+          <div><strong>Account Number:</strong> <span id="bankAccount">-</span></div>
+          <div><strong>Reference:</strong> <span id="bankRefHint">-</span></div>
+        </div>
+        <p style="font-size:12px;color:#94a3b8;margin-bottom:12px;">Once you've made the transfer, let us know the reference number below so our team can confirm it against your invoice.</p>
+        <div class="public-form-group">
+          <input type="text" class="public-form-input" id="bankRefInput" placeholder="Your transaction reference / deposit slip no.">
+        </div>
+        <button class="public-form-submit" id="bankNotifyBtn" style="margin-top:8px;background:#1B2A5E;"><i class="ti ti-mail" aria-hidden="true"></i> Notify Us of Payment</button>
+        <div id="bankStatus" style="font-size:12.5px;margin-top:10px;display:none;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="footer-top">
+    <div>
+      <div class="footer-brand">NILE<em>CREST</em> HOLDINGS</div>
+      <div class="footer-tagline">Logistics &middot; Transport &middot; Construction<br>Delivering excellence across East Africa.</div>
+      <div class="footer-contacts">
+        <a class="footer-contact" href="tel:+254110500712"><i class="ti ti-phone" aria-hidden="true"></i> +254 11 0500712</a>
+        <a class="footer-contact" href="mailto:Nilecrest@gmail.com"><i class="ti ti-mail" aria-hidden="true"></i> Nilecrest@gmail.com</a>
+        <a class="footer-contact" href="https://www.google.com/maps/search/?api=1&query=Nairobi+Kenya+PO+BOX+0,00100" target="_blank" rel="noopener"><i class="ti ti-map-pin" aria-hidden="true"></i> Nairobi Kenya, PO BOX 0,00100</a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Services</div>
+      <a href="services.html">Logistics &amp; Freight</a>
+      <a href="services.html">Transport Solutions</a>
+      <a href="services.html">Civil Construction</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Company</div>
+      <a href="about.html">About Us</a>
+      <a href="projects.html">Projects</a>
+      <a href="fleet.html">Fleet</a>
+      <a href="contact.html">Contact</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">&copy; 2026 Nilecrest Holdings Ltd. All rights reserved.</div>
+    <a href="https://wa.me/254110500712" target="_blank"><button class="wa-btn"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i> WhatsApp Us</button></a>
+  </div>
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const invoiceId = params.get('id');
+const statusPillStyle = {
+  Unpaid:   'background:#fef3e2;color:#c2680f;',
+  Partial:  'background:#e0e7ff;color:#3730a3;',
+  Paid:     'background:#dcfce7;color:#166534;',
+  Overdue:  'background:#fee2e2;color:#991b1b;',
+};
+
+function formatMoney(n) { return 'KSh ' + Number(n || 0).toLocaleString('en-KE'); }
+function formatDate(d) {
+  if (!d) return '-';
+  return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+let outstanding = 0;
+
+async function loadInvoice() {
+  if (!invoiceId) {
+    showError('No invoice was specified. Please use the link sent to you, or contact us if you believe this is an error.');
+    return;
+  }
+  try {
+    const res = await fetch(`/api/invoices/public/${invoiceId}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Invoice not found');
+
+    document.getElementById('invNumber').textContent = data.invoice_number;
+    document.getElementById('invClient').textContent = data.client_name;
+    document.getElementById('invDue').textContent = formatDate(data.due_date);
+    document.getElementById('invAmount').textContent = formatMoney(data.amount);
+    document.getElementById('invPaid').textContent = formatMoney(data.amount_paid);
+
+    outstanding = Number(data.amount) - Number(data.amount_paid);
+    document.getElementById('invOutstanding').textContent = formatMoney(outstanding);
+
+    const pill = document.getElementById('invStatusPill');
+    pill.textContent = data.status;
+    pill.style.cssText += statusPillStyle[data.status] || '';
+
+    document.getElementById('bankRefHint').textContent = data.invoice_number;
+    document.getElementById('bankName').textContent = 'YOUR BANK NAME HERE';
+    document.getElementById('bankAccount').textContent = 'YOUR ACCOUNT NUMBER HERE';
+
+    if (outstanding <= 0) {
+      document.getElementById('paidNotice').style.display = 'block';
+      document.getElementById('paymentOptions').style.display = 'none';
+    }
+
+    document.getElementById('loadingMsg').style.display = 'none';
+    document.getElementById('invoiceCard').style.display = 'block';
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
+function showError(message) {
+  document.getElementById('loadingMsg').style.display = 'none';
+  const el = document.getElementById('errorMsg');
+  el.innerHTML = `<i class="ti ti-alert-circle" aria-hidden="true"></i> ${message}`;
+  el.style.display = 'flex';
+}
+
+// ---------- M-PESA STK PUSH ----------
+document.getElementById('mpesaPayBtn').addEventListener('click', async () => {
+  const phone = document.getElementById('mpesaPhone').value.trim();
+  const statusEl = document.getElementById('mpesaStatus');
+  const btn = document.getElementById('mpesaPayBtn');
+
+  if (!phone) {
+    statusEl.style.display = 'block';
+    statusEl.style.color = '#ef4444';
+    statusEl.textContent = 'Please enter a phone number.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader-2" aria-hidden="true"></i> Sending request...';
+  statusEl.style.display = 'block';
+  statusEl.style.color = '#64748b';
+  statusEl.textContent = '';
+
+  try {
+    const res = await fetch(`/api/mpesa/pay/${invoiceId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not start payment');
+
+    statusEl.style.color = '#16a34a';
+    statusEl.textContent = 'Check your phone and enter your M-Pesa PIN to complete payment.';
+    pollPaymentStatus(data.checkoutRequestId, statusEl, btn);
+  } catch (err) {
+    statusEl.style.color = '#ef4444';
+    statusEl.textContent = err.message;
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-send" aria-hidden="true"></i> Send Payment Request';
+  }
+});
+
+function pollPaymentStatus(checkoutRequestId, statusEl, btn) {
+  let attempts = 0;
+  const interval = setInterval(async () => {
+    attempts++;
+    if (attempts > 20) { // ~60 seconds
+      clearInterval(interval);
+      statusEl.textContent = "Still waiting on confirmation. If you've completed payment, it will reflect shortly -- you can also refresh this page.";
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ti ti-send" aria-hidden="true"></i> Send Payment Request';
+      return;
+    }
+    try {
+      const res = await fetch(`/api/mpesa/status/${checkoutRequestId}`);
+      const data = await res.json();
+      if (data.status === 'Success') {
+        clearInterval(interval);
+        statusEl.style.color = '#16a34a';
+        statusEl.textContent = 'Payment received. Thank you!';
+        setTimeout(() => window.location.reload(), 1500);
+      } else if (data.status === 'Failed' || data.status === 'Cancelled') {
+        clearInterval(interval);
+        statusEl.style.color = '#ef4444';
+        statusEl.textContent = data.result_desc || 'Payment was not completed.';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ti ti-send" aria-hidden="true"></i> Send Payment Request';
+      }
+    } catch { /* ignore transient errors, keep polling */ }
+  }, 3000);
+}
+
+// ---------- BANK TRANSFER NOTIFICATION ----------
+document.getElementById('bankNotifyBtn').addEventListener('click', async () => {
+  const ref = document.getElementById('bankRefInput').value.trim();
+  const statusEl = document.getElementById('bankStatus');
+  const btn = document.getElementById('bankNotifyBtn');
+
+  if (!ref) {
+    statusEl.style.display = 'block';
+    statusEl.style.color = '#ef4444';
+    statusEl.textContent = 'Please enter your transfer reference.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader-2" aria-hidden="true"></i> Sending...';
+
+  try {
+    const res = await fetch('/api/enquiries', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: document.getElementById('invClient').textContent,
+        email: 'noreply@nilecrestholdings.com',
+        subject: `Bank transfer notification for ${document.getElementById('invNumber').textContent}`,
+        message: `Client reports a bank transfer for invoice ${document.getElementById('invNumber').textContent}. Reference: ${ref}. Please verify and record the payment.`,
+      }),
+    });
+    if (!res.ok) throw new Error('Could not send notification');
+
+    statusEl.style.display = 'block';
+    statusEl.style.color = '#16a34a';
+    statusEl.textContent = "Thanks -- we've been notified and will confirm your payment shortly.";
+    document.getElementById('bankRefInput').value = '';
+  } catch (err) {
+    statusEl.style.display = 'block';
+    statusEl.style.color = '#ef4444';
+    statusEl.textContent = err.message;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-mail" aria-hidden="true"></i> Notify Us of Payment';
+  }
+});
+
+loadInvoice();
+</script>
+
+<script>
+// Mobile nav toggle
+(function () {
+  var toggle = document.getElementById('navToggle');
+  var links = document.querySelector('.nav-links');
+  if (!toggle || !links) return;
+  toggle.addEventListener('click', function () {
+    toggle.classList.toggle('open');
+    links.classList.toggle('open');
+  });
+  links.querySelectorAll('a').forEach(function (link) {
+    link.addEventListener('click', function () {
+      toggle.classList.remove('open');
+      links.classList.remove('open');
+    });
+  });
+})();
+</script>
+</body>
+</html>

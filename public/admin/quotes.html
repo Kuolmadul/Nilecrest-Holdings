@@ -152,6 +152,28 @@
   </div>
 </div>
 
+<!-- CREATE INVOICE MODAL -->
+<div class="modal-overlay" id="invoiceOverlay" onclick="closeInvoiceModal()"></div>
+<div class="modal" id="invoiceModal" style="width:min(460px,95vw);">
+  <div class="modal-head">
+    <div class="modal-title">Create invoice for this quote</div>
+    <button class="modal-close" onclick="closeInvoiceModal()"><i class="ti ti-x"></i></button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="invoiceQuoteId">
+    <div class="form-group"><label class="form-label">Client</label><input type="text" class="form-input" id="invoiceClientName" disabled></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Agreed Amount (KSh)</label><input type="number" class="form-input" id="invoiceAmount" placeholder="0"></div>
+      <div class="form-group"><label class="form-label">Due Date</label><input type="date" class="form-input" id="invoiceDueDate"></div>
+    </div>
+    <div class="reason-error" id="invoiceError" style="display:none;">Enter a valid amount.</div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-outline" onclick="closeInvoiceModal()">Cancel</button>
+    <button class="btn-primary" id="createInvoiceBtn"><i class="ti ti-receipt"></i> Create Invoice</button>
+  </div>
+</div>
+
 <style>
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; }
 .modal { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:12px; width:min(560px,95vw); z-index:201; box-shadow:0 20px 60px rgba(0,0,0,0.2); max-height:88vh; overflow-y:auto; }
@@ -223,6 +245,7 @@ async function loadQuotes() {
           <td><div class="action-btns">
             <button class="action-btn" title="View" onclick="viewQuote(${q.id})"><i class="ti ti-eye"></i></button>
             <button class="action-btn" title="Edit" onclick="editQuote(${q.id})"><i class="ti ti-pencil"></i></button>
+            ${q.status === 'Won' ? `<button class="action-btn" title="Create Invoice" onclick="openInvoiceModal(${q.id}, '${escapeHtml(q.client_name)}', ${q.estimated_value || 'null'})"><i class="ti ti-receipt"></i></button>` : ''}
             <button class="action-btn danger" title="Delete" onclick="askDeleteQuote(${q.id})"><i class="ti ti-trash"></i></button>
           </div></td>
         </tr>`).join('');
@@ -408,6 +431,40 @@ document.getElementById('confirmDeleteBtn').addEventListener('click', async () =
     closeDeleteModal();
     loadQuotes();
     loadSummary();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+// ---------- CREATE INVOICE FROM WON QUOTE ----------
+function openInvoiceModal(quoteId, clientName, estimatedValue) {
+  document.getElementById('invoiceQuoteId').value = quoteId;
+  document.getElementById('invoiceClientName').value = clientName;
+  document.getElementById('invoiceAmount').value = estimatedValue || '';
+  document.getElementById('invoiceDueDate').value = '';
+  document.getElementById('invoiceError').style.display = 'none';
+  document.getElementById('invoiceOverlay').classList.add('show');
+  document.getElementById('invoiceModal').classList.add('show');
+}
+function closeInvoiceModal() {
+  document.getElementById('invoiceOverlay').classList.remove('show');
+  document.getElementById('invoiceModal').classList.remove('show');
+}
+document.getElementById('createInvoiceBtn').addEventListener('click', async () => {
+  const quoteId = document.getElementById('invoiceQuoteId').value;
+  const amount = document.getElementById('invoiceAmount').value;
+  const dueDate = document.getElementById('invoiceDueDate').value;
+  if (!amount || Number(amount) <= 0) {
+    document.getElementById('invoiceError').style.display = 'block';
+    return;
+  }
+  try {
+    await api(`/invoices/from-quote/${quoteId}`, {
+      method: 'POST',
+      body: JSON.stringify({ amount, due_date: dueDate || null }),
+    });
+    closeInvoiceModal();
+    alert('Invoice created. You can record payments for it from the Invoices page.');
   } catch (err) {
     alert(err.message);
   }

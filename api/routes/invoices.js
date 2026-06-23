@@ -11,6 +11,24 @@ const SLUG_TO_SERVICE = {
   construction:   'Construction',
 };
 
+// ---------- PUBLIC: view one invoice for the client-facing payment page ----------
+// Deliberately returns only what a client needs to see and pay -- no internal IDs
+// beyond the invoice's own, no department/handler info, no audit fields.
+router.get('/public/:id', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT invoice_number, client_name, amount, amount_paid, status, due_date
+       FROM invoices WHERE id = $1 AND is_deleted = FALSE`,
+      [req.params.id]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: 'Invoice not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch invoice' });
+  }
+});
+
 router.get('/', requireStaff, async (req, res) => {
   const { page = 1, limit = 10, status = '' } = req.query;
   const offset = (Number(page) - 1) * Number(limit);
@@ -91,8 +109,8 @@ router.get('/:id', requireStaff, async (req, res) => {
 router.post('/', requireStaff, async (req, res) => {
   const { quote_id, client_id, client_name, amount, due_date, status } = req.body;
   try {
-    const countResult = await pool.query('SELECT COUNT(*) FROM invoices');
-    const num = `INV-${new Date().getFullYear()}-${String(Number(countResult.rows[0].count) + 1).padStart(3, '0')}`;
+    const seq = await pool.query("SELECT nextval('invoice_ref_seq') AS n");
+    const num = `INV-${new Date().getFullYear()}-${String(seq.rows[0].n).padStart(3, '0')}`;
     const result = await pool.query(
       `INSERT INTO invoices (invoice_number, quote_id, client_id, client_name, amount, due_date, status)
        VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
@@ -102,6 +120,43 @@ router.post('/', requireStaff, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to create invoice' });
+  }
+});
+
+// ---------- CREATE FROM A WON QUOTE ----------
+// Pre-fills client details from the quote so staff only need to confirm the agreed amount.
+router.post('/from-quote/:quoteId', requireStaff, async (req, res) => {
+  const { amount, due_date } = req.body;
+  if (!amount) return res.status(400).json({ error: 'Amount is required' });
+
+  try {
+    const quoteResult = await pool.query(
+      `SELECT * FROM quotes WHERE id = $1 AND is_deleted = FALSE`,
+      [req.params.quoteId]
+    );
+    if (!quoteResult.rows.length) return res.status(404).json({ error: 'Quote not found' });
+    const quote = quoteResult.rows[0];
+
+    const existing = await pool.query(
+      `SELECT id, invoice_number FROM invoices WHERE quote_id = $1 AND is_deleted = FALSE`,
+      [quote.id]
+    );
+    if (existing.rows.length) {
+      return res.status(409).json({ error: `An invoice already exists for this quote (${existing.rows[0].invoice_number})` });
+    }
+
+    const seq = await pool.query("SELECT nextval('invoice_ref_seq') AS n");
+    const num = `INV-${new Date().getFullYear()}-${String(seq.rows[0].n).padStart(3, '0')}`;
+
+    const result = await pool.query(
+      `INSERT INTO invoices (invoice_number, quote_id, client_name, amount, due_date, status)
+       VALUES ($1,$2,$3,$4,$5,'Unpaid') RETURNING *`,
+      [num, quote.id, quote.client_name, amount, due_date || null]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to create invoice from quote' });
   }
 });
 
@@ -168,6 +223,85 @@ router.delete('/:id', requireStaff, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to delete invoice' });
+  }
+});
+
+// ---------- PAYMENT HISTORY for one invoice ----------
+router.get('/:id/payments', requireStaff, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT p.*, s.name AS recorded_by_name FROM payments p
+       LEFT JOIN staff s ON s.id = p.recorded_by
+       WHERE p.invoice_id = $1 ORDER BY p.created_at DESC`,
+      [req.params.id]
+    );
+    res.json({ payments: result.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch payment history' });
+  }
+});
+
+// ---------- RECORD A PAYMENT (mpesa / bank_transfer / cash) ----------
+// Inserts a payment row, then recalculates amount_paid and status from the
+// sum of all payments so far -- amount_paid is never trusted as hand-typed input.
+router.post('/:id/payments', requireStaff, async (req, res) => {
+  const { amount, method, mpesa_receipt, bank_reference, notes } = req.body;
+
+  if (!amount || Number(amount) <= 0) return res.status(400).json({ error: 'A valid amount is required' });
+  if (!['mpesa', 'bank_transfer', 'cash'].includes(method)) {
+    return res.status(400).json({ error: 'Method must be mpesa, bank_transfer, or cash' });
+  }
+  if (method === 'bank_transfer' && (!bank_reference || !bank_reference.trim())) {
+    return res.status(400).json({ error: 'A bank reference is required for bank transfers' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const invoiceResult = await client.query(
+      'SELECT * FROM invoices WHERE id = $1 AND is_deleted = FALSE FOR UPDATE',
+      [req.params.id]
+    );
+    if (!invoiceResult.rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Invoice not found' });
+    }
+    const invoice = invoiceResult.rows[0];
+
+    await client.query(
+      `INSERT INTO payments (invoice_id, amount, method, mpesa_receipt, bank_reference, notes, recorded_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      [invoice.id, amount, method, mpesa_receipt || null, bank_reference || null, notes || null, req.staff.id]
+    );
+
+    const totalResult = await client.query(
+      'SELECT COALESCE(SUM(amount),0) AS total FROM payments WHERE invoice_id = $1',
+      [invoice.id]
+    );
+    const totalPaid = Number(totalResult.rows[0].total);
+    const newStatus = totalPaid <= 0 ? 'Unpaid' : totalPaid < Number(invoice.amount) ? 'Partial' : 'Paid';
+
+    const updateResult = await client.query(
+      `UPDATE invoices SET
+        amount_paid = $1,
+        status = $2,
+        payment_method = $3,
+        paid_at = CASE WHEN $2 = 'Paid' THEN NOW() ELSE paid_at END,
+        updated_at = NOW()
+       WHERE id = $4 RETURNING *`,
+      [totalPaid, newStatus, method, invoice.id]
+    );
+
+    await client.query('COMMIT');
+    res.status(201).json(updateResult.rows[0]);
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.status(500).json({ error: 'Failed to record payment' });
+  } finally {
+    client.release();
   }
 });
 
