@@ -47,6 +47,11 @@
           </div>
           <div class="form-group"><label class="form-label">WhatsApp Number (digits only, with country code)</label><input type="text" class="form-input" id="sWhatsapp" placeholder="254..."></div>
           <div class="form-group"><label class="form-label">Office Address</label><textarea class="form-input" id="sAddress" rows="2"></textarea></div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Bank Name</label><input type="text" class="form-input" id="sBankName" placeholder="e.g. Equity Bank"></div>
+            <div class="form-group"><label class="form-label">Bank Account Number</label><input type="text" class="form-input" id="sBankAccount" placeholder="e.g. 1234567890"></div>
+          </div>
+          <div style="font-size:11px;color:var(--text-3);margin-top:-8px;">Shown to clients on the Pay Invoice page under "Pay by Bank Transfer".</div>
           <div class="form-group">
             <label class="form-label">Google Maps Embed URL</label>
             <textarea class="form-input" id="sMapsUrl" rows="3" placeholder="Paste the src= URL from the Google Maps embed iframe"></textarea>
@@ -118,6 +123,8 @@ async function loadSettings() {
     document.getElementById('sPhone').value = s.site_phone || '';
     document.getElementById('sWhatsapp').value = s.whatsapp_number || '';
     document.getElementById('sAddress').value = s.site_address || '';
+    document.getElementById('sBankName').value = s.bank_name || '';
+    document.getElementById('sBankAccount').value = s.bank_account_number || '';
     document.getElementById('sMapsUrl').value = s.maps_embed_url || '';
     renderMapPreview(s.maps_embed_url);
   } catch (err) {
@@ -141,6 +148,8 @@ document.getElementById('saveSettingsBtn').addEventListener('click', async () =>
       site_phone: document.getElementById('sPhone').value,
       whatsapp_number: document.getElementById('sWhatsapp').value,
       site_address: document.getElementById('sAddress').value,
+      bank_name: document.getElementById('sBankName').value,
+      bank_account_number: document.getElementById('sBankAccount').value,
       maps_embed_url: document.getElementById('sMapsUrl').value,
     })});
     renderMapPreview(document.getElementById('sMapsUrl').value);

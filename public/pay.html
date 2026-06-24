@@ -152,6 +152,18 @@ function formatDate(d) {
 
 let outstanding = 0;
 
+async function loadBankDetails() {
+  try {
+    const res = await fetch('/api/settings');
+    const data = await res.json();
+    document.getElementById('bankName').textContent = data.bank_name || 'Contact us for bank details';
+    document.getElementById('bankAccount').textContent = data.bank_account_number || '-';
+  } catch {
+    // Non-fatal -- M-Pesa payment still works even if this fails.
+    document.getElementById('bankName').textContent = 'Contact us for bank details';
+  }
+}
+
 async function loadInvoice() {
   if (!invoiceId) {
     showError('No invoice was specified. Please use the link sent to you, or contact us if you believe this is an error.');
@@ -176,8 +188,7 @@ async function loadInvoice() {
     pill.style.cssText += statusPillStyle[data.status] || '';
 
     document.getElementById('bankRefHint').textContent = data.invoice_number;
-    document.getElementById('bankName').textContent = 'YOUR BANK NAME HERE';
-    document.getElementById('bankAccount').textContent = 'YOUR ACCOUNT NUMBER HERE';
+    loadBankDetails();
 
     if (outstanding <= 0) {
       document.getElementById('paidNotice').style.display = 'block';

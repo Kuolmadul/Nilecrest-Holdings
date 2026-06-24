@@ -2,12 +2,13 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('../../db');
+const { loginLimiter } = require('../middleware/rateLimit');
 require('dotenv').config();
 
 const router = express.Router();
 const SIGN_OPTS = { expiresIn: process.env.JWT_EXPIRES_IN || '7d' };
 
-router.post('/staff/login', async (req, res) => {
+router.post('/staff/login', loginLimiter, async (req, res) => {
   const { email, password } = req.body;
   try {
     const result = await pool.query(
@@ -43,7 +44,7 @@ router.post('/staff/login', async (req, res) => {
   }
 });
 
-router.post('/client/register', async (req, res) => {
+router.post('/client/register', loginLimiter, async (req, res) => {
   const { name, company, email, phone, password } = req.body;
   try {
     const hashed = await bcrypt.hash(password, 10);
@@ -62,7 +63,7 @@ router.post('/client/register', async (req, res) => {
   }
 });
 
-router.post('/client/login', async (req, res) => {
+router.post('/client/login', loginLimiter, async (req, res) => {
   const { email, password } = req.body;
   try {
     const result = await pool.query('SELECT * FROM clients WHERE email = $1 AND is_active = TRUE', [email]);

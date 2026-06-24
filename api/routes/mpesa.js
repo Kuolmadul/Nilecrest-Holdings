@@ -1,12 +1,13 @@
 const express = require('express');
 const pool = require('../../db');
 const { stkPush, normalizePhone } = require('../mpesa');
+const { mpesaPayLimiter } = require('../middleware/rateLimit');
 
 const router = express.Router();
 
 // ---------- PUBLIC: client triggers payment from the invoice view page ----------
 // No staff auth -- this is what a client hits when they click "Pay with M-Pesa".
-router.post('/pay/:invoiceId', async (req, res) => {
+router.post('/pay/:invoiceId', mpesaPayLimiter, async (req, res) => {
   const { phone } = req.body;
   if (!phone) return res.status(400).json({ error: 'Phone number is required' });
 
