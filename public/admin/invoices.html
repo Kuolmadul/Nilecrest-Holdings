@@ -69,6 +69,7 @@
   <div class="modal-body">
     <input type="hidden" id="invoiceId">
     <div class="form-group"><label class="form-label">Client Name</label><input type="text" class="form-input" id="fClientName" placeholder="e.g. Kenya Breweries Ltd"></div>
+    <div class="form-group"><label class="form-label">Client Email <span style="color:var(--text-3);font-weight:400;text-transform:none;">(optional -- enables auto-sending the payment link)</span></label><input type="email" class="form-input" id="fClientEmail" placeholder="client@email.com"></div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Amount (KSh)</label><input type="number" class="form-input" id="fAmount" placeholder="0"></div>
       <div class="form-group"><label class="form-label">Amount Paid (KSh)</label><input type="number" class="form-input" id="fAmountPaid" placeholder="0" disabled style="background:#f6f7fb;color:#94a3b8;"></div>
@@ -208,7 +209,7 @@ document.getElementById('statusFilter').addEventListener('change', loadInvoices)
 function openModal() {
   document.getElementById('modalTitle').textContent = 'Create Invoice';
   document.getElementById('invoiceId').value = '';
-  ['fClientName','fAmount','fAmountPaid','fDueDate'].forEach(id => document.getElementById(id).value = '');
+  ['fClientName','fClientEmail','fAmount','fAmountPaid','fDueDate'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('fStatus').value = 'Unpaid';
   document.getElementById('modalOverlay').classList.add('show');
   document.getElementById('modal').classList.add('show');
@@ -224,6 +225,7 @@ function editInvoice(id) {
   document.getElementById('modalTitle').textContent = `Edit ${inv.invoice_number}`;
   document.getElementById('invoiceId').value = inv.id;
   document.getElementById('fClientName').value = inv.client_name;
+  document.getElementById('fClientEmail').value = inv.client_email || '';
   document.getElementById('fAmount').value = inv.amount;
   document.getElementById('fAmountPaid').value = inv.amount_paid;
   document.getElementById('fDueDate').value = inv.due_date ? inv.due_date.split('T')[0] : '';
@@ -243,6 +245,7 @@ document.getElementById('saveInvoiceBtn').addEventListener('click', async () => 
     } else {
       await api('/invoices', { method: 'POST', body: JSON.stringify({
         client_name: document.getElementById('fClientName').value,
+        client_email: document.getElementById('fClientEmail').value || null,
         amount: document.getElementById('fAmount').value,
         due_date: document.getElementById('fDueDate').value || null,
         status: document.getElementById('fStatus').value,

@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../../db');
 const { requireStaff, canAccessSlug } = require('../middleware/auth');
+const { sendInvoiceEmail } = require('../email');
 
 const router = express.Router();
 
@@ -107,16 +108,23 @@ router.get('/:id', requireStaff, async (req, res) => {
 });
 
 router.post('/', requireStaff, async (req, res) => {
-  const { quote_id, client_id, client_name, amount, due_date, status } = req.body;
+  const { quote_id, client_id, client_name, client_email, amount, due_date, status } = req.body;
   try {
     const seq = await pool.query("SELECT nextval('invoice_ref_seq') AS n");
     const num = `INV-${new Date().getFullYear()}-${String(seq.rows[0].n).padStart(3, '0')}`;
     const result = await pool.query(
-      `INSERT INTO invoices (invoice_number, quote_id, client_id, client_name, amount, due_date, status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-      [num, quote_id || null, client_id || null, client_name, amount, due_date || null, status || 'Unpaid']
+      `INSERT INTO invoices (invoice_number, quote_id, client_id, client_name, client_email, amount, due_date, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+      [num, quote_id || null, client_id || null, client_name, client_email || null, amount, due_date || null, status || 'Unpaid']
     );
-    res.status(201).json(result.rows[0]);
+    const invoice = result.rows[0];
+    res.status(201).json(invoice);
+
+    // Fire-and-forget: never let a slow/failed email delay or break invoice
+    // creation. The response above has already gone out to the browser.
+    sendInvoiceEmail(invoice).then(outcome => {
+      if (!outcome.sent) console.warn(`Invoice ${invoice.invoice_number} email not sent: ${outcome.reason}`);
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to create invoice' });
@@ -149,11 +157,16 @@ router.post('/from-quote/:quoteId', requireStaff, async (req, res) => {
     const num = `INV-${new Date().getFullYear()}-${String(seq.rows[0].n).padStart(3, '0')}`;
 
     const result = await pool.query(
-      `INSERT INTO invoices (invoice_number, quote_id, client_name, amount, due_date, status)
-       VALUES ($1,$2,$3,$4,$5,'Unpaid') RETURNING *`,
-      [num, quote.id, quote.client_name, amount, due_date || null]
+      `INSERT INTO invoices (invoice_number, quote_id, client_name, client_email, amount, due_date, status)
+       VALUES ($1,$2,$3,$4,$5,$6,'Unpaid') RETURNING *`,
+      [num, quote.id, quote.client_name, quote.client_email, amount, due_date || null]
     );
-    res.status(201).json(result.rows[0]);
+    const invoice = result.rows[0];
+    res.status(201).json(invoice);
+
+    sendInvoiceEmail(invoice).then(outcome => {
+      if (!outcome.sent) console.warn(`Invoice ${invoice.invoice_number} email not sent: ${outcome.reason}`);
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to create invoice from quote' });
