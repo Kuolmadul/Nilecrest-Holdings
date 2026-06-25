@@ -31,4 +31,15 @@ const generalLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-module.exports = { loginLimiter, mpesaPayLimiter, generalLimiter };
+// ---------- PUBLIC FORM SUBMISSIONS: quote requests, job applications ----------
+// Looser than login/mpesa since this just guards against scripted spam of
+// public forms, not account or payment abuse. 8 submissions per 10 min per IP.
+const publicSubmissionLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 8,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many submissions from this device. Please wait a few minutes and try again.' },
+});
+
+module.exports = { loginLimiter, mpesaPayLimiter, generalLimiter, publicSubmissionLimiter };

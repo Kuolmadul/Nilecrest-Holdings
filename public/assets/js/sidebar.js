@@ -17,6 +17,7 @@ function renderSidebar(activePage) {
     { key: 'fleet',     href: 'fleet.html',     icon: cfg.icon || 'ti-truck',      label: cfg.fleetLabel || 'Fleet' },
     { key: 'invoices',  href: 'invoices.html',  icon: 'ti-receipt',               label: 'Invoices' },
     { key: 'clients',   href: 'clients.html',   icon: 'ti-users',                 label: 'Clients' },
+    { key: 'applications', href: 'applications.html', icon: 'ti-briefcase', label: 'Job Applications', badge: 'applicationsBadge' },
   ];
   const settingsItems = [
     { key: 'users',    href: 'users.html',    icon: 'ti-user-cog',  label: 'Users & Roles', adminOnly: true },
@@ -58,6 +59,7 @@ function renderSidebar(activePage) {
 
   renderStaffIdentity();
   loadQuotesBadge();
+  loadApplicationsBadge();
 }
 
 async function loadQuotesBadge() {
@@ -68,6 +70,20 @@ async function loadQuotesBadge() {
       const pending = summary.Pending || 0;
       badge.textContent = pending;
       badge.style.display = pending > 0 ? 'inline-block' : 'none';
+    }
+  } catch {
+    // Non-critical -- badge just stays hidden if the call fails
+  }
+}
+
+async function loadApplicationsBadge() {
+  try {
+    const summary = await api('/job-applications/summary');
+    const badge = document.getElementById('applicationsBadge');
+    if (badge && summary) {
+      const newCount = summary.New || 0;
+      badge.textContent = newCount;
+      badge.style.display = newCount > 0 ? 'inline-block' : 'none';
     }
   } catch {
     // Non-critical -- badge just stays hidden if the call fails

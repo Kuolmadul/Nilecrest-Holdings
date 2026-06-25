@@ -1,12 +1,15 @@
 const express = require('express');
 const pool = require('../../db');
 const { requireStaff } = require('../middleware/auth');
+const { upload, uploadBuffer } = require('../upload');
+const { publicSubmissionLimiter } = require('../middleware/rateLimit');
 
 const router = express.Router();
 
 // ---------- PUBLIC: submit a quote request from the website ----------
 // No auth -- anyone can request a quote. Always lands as Pending for staff to triage.
-router.post('/public', async (req, res) => {
+// Accepts an optional single file (drawing/BOQ/plan) under the field name "attachment".
+router.post('/public', publicSubmissionLimiter, upload.single('attachment'), async (req, res) => {
   const { client_name, client_email, client_phone, company, service_type, description, origin, destination } = req.body;
 
   if (!client_name || !client_email || !service_type) {
@@ -14,13 +17,18 @@ router.post('/public', async (req, res) => {
   }
 
   try {
+    let filePath = null;
+    if (req.file) {
+      filePath = await uploadBuffer(req.file, 'quote-attachments');
+    }
+
     const seq = await pool.query("SELECT nextval('quote_ref_seq') AS n");
     const ref = `QT-${new Date().getFullYear()}-${String(seq.rows[0].n).padStart(3, '0')}`;
 
     const result = await pool.query(
-      `INSERT INTO quotes (ref_number, client_name, client_email, client_phone, company, service_type, description, origin, destination, status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'Pending') RETURNING *`,
-      [ref, client_name, client_email, client_phone || null, company || null, service_type, description || null, origin || null, destination || null]
+      `INSERT INTO quotes (ref_number, client_name, client_email, client_phone, company, service_type, description, origin, destination, file_path, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'Pending') RETURNING *`,
+      [ref, client_name, client_email, client_phone || null, company || null, service_type, description || null, origin || null, destination || null, filePath]
     );
 
     await pool.query(
@@ -31,7 +39,7 @@ router.post('/public', async (req, res) => {
     res.status(201).json({ ref_number: ref, message: 'Quote request submitted' });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Failed to submit quote request' });
+    res.status(500).json({ error: err.message || 'Failed to submit quote request' });
   }
 });
 

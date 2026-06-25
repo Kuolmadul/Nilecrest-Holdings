@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Job Applications | Nilecrest Admin</title>
+<link rel="icon" href="../assets/images/logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<div id="sidebarMount"></div>
+
+<div class="main-wrap">
+  <header class="topbar">
+    <button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="ti ti-menu-2"></i></button>
+    <div class="topbar-title">Job Applications</div>
+    <div class="topbar-right">
+      <a href="../careers.html" target="_blank" class="topbar-link"><i class="ti ti-external-link"></i> View Careers Page</a>
+      <div class="topbar-notif"><i class="ti ti-bell"></i><span class="notif-dot"></span></div>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="page-heading">
+      <div>
+        <div class="page-title">Job Applications</div>
+        <div class="page-sub">Review applicants submitted through the public Careers page.</div>
+      </div>
+    </div>
+
+    <div class="stats-row" style="margin-bottom:20px;">
+      <div class="stat-card"><div class="stat-icon orange"><i class="ti ti-inbox"></i></div><div class="stat-info"><div class="stat-val" id="cntNew">-</div><div class="stat-lbl">New</div></div></div>
+      <div class="stat-card"><div class="stat-icon navy"><i class="ti ti-star"></i></div><div class="stat-info"><div class="stat-val" id="cntShortlisted">-</div><div class="stat-lbl">Shortlisted</div></div></div>
+      <div class="stat-card"><div class="stat-icon purple"><i class="ti ti-users"></i></div><div class="stat-info"><div class="stat-val" id="cntInterviewing">-</div><div class="stat-lbl">Interviewing</div></div></div>
+      <div class="stat-card"><div class="stat-icon green"><i class="ti ti-circle-check"></i></div><div class="stat-info"><div class="stat-val" id="cntHired">-</div><div class="stat-lbl">Hired</div></div></div>
+    </div>
+
+    <div class="card">
+      <div class="page-toolbar">
+        <select class="filter-select" id="statusFilter">
+          <option value="">All Statuses</option>
+          <option value="New">New</option>
+          <option value="Shortlisted">Shortlisted</option>
+          <option value="Interviewing">Interviewing</option>
+          <option value="Hired">Hired</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+      </div>
+
+      <div class="full-table-wrap">
+        <table class="full-table">
+          <thead><tr><th>Ref #</th><th>Applicant</th><th>Position</th><th>Department</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="appsBody"><tr><td colspan="7" class="table-loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <div class="pagination-info" id="pageInfo">-</div>
+        <div class="pagination-btns" id="pageBtns"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- VIEW / REVIEW MODAL -->
+<div class="modal-overlay" id="viewOverlay" onclick="closeViewModal()"></div>
+<div class="modal" id="viewModal" style="width:min(620px,95vw);">
+  <div class="modal-head">
+    <div class="modal-title">Application details</div>
+    <button class="modal-close" onclick="closeViewModal()"><i class="ti ti-x"></i></button>
+  </div>
+  <div class="modal-body">
+    <div id="viewModalBody"></div>
+    <input type="hidden" id="appId">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-input" id="fStatus">
+          <option value="New">New</option>
+          <option value="Shortlisted">Shortlisted</option>
+          <option value="Interviewing">Interviewing</option>
+          <option value="Hired">Hired</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Review Notes (internal)</label>
+      <textarea class="form-input" id="fReviewNotes" rows="3" placeholder="Notes for your team -- not visible to the applicant."></textarea>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-outline" onclick="closeViewModal()">Cancel</button>
+    <button class="btn-primary" id="saveAppBtn"><i class="ti ti-device-floppy"></i> Save</button>
+  </div>
+</div>
+
+<!-- DELETE REASON MODAL -->
+<div class="reason-modal-overlay" id="deleteOverlay" onclick="closeDeleteModal()"></div>
+<div class="reason-modal" id="deleteModal">
+  <div class="reason-modal-head"><div class="reason-modal-title">Delete application</div></div>
+  <div class="reason-modal-body">
+    <p style="font-size:12.5px;color:var(--text-2);margin-bottom:10px;">This removes the application from the dashboard. The record is kept in the database, marked as deleted, for audit purposes.</p>
+    <textarea id="deleteReasonInput" placeholder="Reason for deletion (required)"></textarea>
+    <div class="reason-error" id="deleteReasonError">A reason is required.</div>
+  </div>
+  <div class="reason-modal-footer">
+    <button class="btn-outline" onclick="closeDeleteModal()">Cancel</button>
+    <button class="btn-primary" style="background:#ef4444;" id="confirmDeleteBtn">Delete application</button>
+  </div>
+</div>
+
+<style>
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; }
+.modal { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:12px; width:min(560px,95vw); z-index:201; box-shadow:0 20px 60px rgba(0,0,0,0.2); max-height:88vh; overflow-y:auto; }
+.modal-overlay.show, .modal.show { display:block; }
+.modal-head { display:flex; align-items:center; justify-content:space-between; padding:18px 20px 14px; border-bottom:0.5px solid #e2e6f0; }
+.modal-title { font-size:15px; font-weight:600; color:#1B2A5E; }
+.modal-close { background:none; border:none; font-size:18px; cursor:pointer; color:#94a3b8; border-radius:4px; padding:2px 4px; }
+.modal-close:hover { color:#1B2A5E; background:#f0f2f8; }
+.modal-body { padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
+.modal-footer { padding:14px 20px; border-top:0.5px solid #e2e6f0; display:flex; justify-content:flex-end; gap:10px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.form-group { display:flex; flex-direction:column; gap:5px; }
+.form-label { font-size:11px; font-weight:600; color:#64748b; letter-spacing:0.5px; text-transform:uppercase; }
+.form-input { padding:8px 11px; border:0.5px solid #e2e6f0; border-radius:6px; font-size:13px; font-family:'Inter',sans-serif; color:#1e293b; outline:none; resize:vertical; }
+.form-input:focus { border-color:#1B2A5E; }
+.btn-outline { padding:8px 16px; border:0.5px solid #e2e6f0; background:#fff; border-radius:6px; font-size:12.5px; font-weight:500; cursor:pointer; color:#64748b; }
+.btn-outline:hover { background:#f0f2f8; }
+@media (max-width:520px) { .form-row { grid-template-columns:1fr; } }
+</style>
+
+<script src="../assets/js/api.js"></script>
+<script src="../assets/js/department-config.js"></script>
+<script src="../assets/js/sidebar.js"></script>
+<script>
+requireLogin();
+renderSidebar('applications');
+applyDepartmentTheme();
+
+const statusPillClass = { New: 'pill-pending', Shortlisted: 'pill-review', Interviewing: 'pill-review', Hired: 'pill-won', Rejected: 'pill-lost' };
+let currentPage = 1;
+const PAGE_SIZE = 8;
+
+async function loadSummary() {
+  const s = await api('/job-applications/summary');
+  document.getElementById('cntNew').textContent = s.New;
+  document.getElementById('cntShortlisted').textContent = s.Shortlisted;
+  document.getElementById('cntInterviewing').textContent = s.Interviewing;
+  document.getElementById('cntHired').textContent = s.Hired;
+}
+
+function buildQuery() {
+  const status = document.getElementById('statusFilter').value;
+  const params = new URLSearchParams({ page: currentPage, limit: PAGE_SIZE });
+  if (status) params.set('status', status);
+  return params.toString();
+}
+
+async function loadApplications() {
+  const body = document.getElementById('appsBody');
+  body.innerHTML = `<tr><td colspan="7" class="table-loading">Loading...</td></tr>`;
+  try {
+    const data = await api(`/job-applications?${buildQuery()}`);
+    if (!data.rows.length) {
+      body.innerHTML = `<tr><td colspan="7" class="table-empty">No applications match this filter</td></tr>`;
+    } else {
+      body.innerHTML = data.rows.map(a => `
+        <tr>
+          <td style="color:var(--text-2);font-size:11px;">${escapeHtml(a.ref_number)}</td>
+          <td><span style="font-weight:500;">${escapeHtml(a.full_name)}</span></td>
+          <td>${escapeHtml(a.position_title)}</td>
+          <td style="color:var(--text-2);">${escapeHtml(a.department_name || '-')}</td>
+          <td style="color:var(--text-2);">${formatDate(a.created_at)}</td>
+          <td><span class="pill ${statusPillClass[a.status] || ''}">${a.status}</span></td>
+          <td><div class="action-btns">
+            <button class="action-btn" title="View / Review" onclick="viewApplication(${a.id})"><i class="ti ti-eye"></i></button>
+            <button class="action-btn danger" title="Delete" onclick="askDeleteApplication(${a.id})"><i class="ti ti-trash"></i></button>
+          </div></td>
+        </tr>`).join('');
+    }
+    renderPagination(data.total);
+  } catch (err) {
+    body.innerHTML = `<tr><td colspan="7" class="table-empty">Failed to load applications</td></tr>`;
+  }
+}
+
+function renderPagination(total) {
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  document.getElementById('pageInfo').textContent = `Showing page ${currentPage} of ${totalPages} (${total} applications)`;
+  const btns = document.getElementById('pageBtns');
+  let html = '';
+  for (let i = 1; i <= totalPages; i++) {
+    html += `<button class="page-btn${i === currentPage ? ' active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+  }
+  btns.innerHTML = html;
+}
+
+function goToPage(p) { currentPage = p; loadApplications(); }
+
+document.getElementById('statusFilter').addEventListener('change', () => { currentPage = 1; loadApplications(); });
+
+// ---------- VIEW / REVIEW MODAL ----------
+async function viewApplication(id) {
+  const app = await api(`/job-applications/${id}`);
+  document.getElementById('appId').value = app.id;
+  document.getElementById('viewModalBody').innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-field"><div class="detail-label">Reference</div><div class="detail-value">${escapeHtml(app.ref_number)}</div></div>
+      <div class="detail-field"><div class="detail-label">Applicant</div><div class="detail-value">${escapeHtml(app.full_name)}</div></div>
+      <div class="detail-field"><div class="detail-label">Email</div><div class="detail-value">${escapeHtml(app.email)}</div></div>
+      <div class="detail-field"><div class="detail-label">Phone</div><div class="detail-value">${escapeHtml(app.phone || '-')}</div></div>
+      <div class="detail-field"><div class="detail-label">Position</div><div class="detail-value">${escapeHtml(app.position_title)}</div></div>
+      <div class="detail-field"><div class="detail-label">Department</div><div class="detail-value">${escapeHtml(app.department_name || '-')}</div></div>
+      <div class="detail-field" style="grid-column:1/-1;"><div class="detail-label">Cover Message</div><div class="detail-value">${escapeHtml(app.cover_message || '-')}</div></div>
+      <div class="detail-field" style="grid-column:1/-1;"><div class="detail-label">CV / Attachment</div><div class="detail-value">${app.cv_file_path ? `<a href="${escapeHtml(app.cv_file_path)}" target="_blank" rel="noopener"><i class="ti ti-paperclip"></i> View CV</a>` : 'No file attached'}</div></div>
+    </div>
+  `;
+  document.getElementById('fStatus').value = app.status;
+  document.getElementById('fReviewNotes').value = app.review_notes || '';
+  document.getElementById('viewOverlay').classList.add('show');
+  document.getElementById('viewModal').classList.add('show');
+}
+function closeViewModal() {
+  document.getElementById('viewOverlay').classList.remove('show');
+  document.getElementById('viewModal').classList.remove('show');
+}
+
+document.getElementById('saveAppBtn').addEventListener('click', async () => {
+  const id = document.getElementById('appId').value;
+  const payload = {
+    status: document.getElementById('fStatus').value,
+    review_notes: document.getElementById('fReviewNotes').value,
+  };
+  try {
+    await api(`/job-applications/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+    closeViewModal();
+    loadApplications();
+    loadSummary();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+// ---------- DELETE WITH REASON ----------
+let pendingDeleteId = null;
+function askDeleteApplication(id) {
+  pendingDeleteId = id;
+  document.getElementById('deleteReasonInput').value = '';
+  document.getElementById('deleteReasonError').style.display = 'none';
+  document.getElementById('deleteOverlay').classList.add('show');
+  document.getElementById('deleteModal').classList.add('show');
+}
+function closeDeleteModal() {
+  document.getElementById('deleteOverlay').classList.remove('show');
+  document.getElementById('deleteModal').classList.remove('show');
+}
+document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+  const reason = document.getElementById('deleteReasonInput').value.trim();
+  if (!reason) { document.getElementById('deleteReasonError').style.display = 'block'; return; }
+  try {
+    await api(`/job-applications/${pendingDeleteId}`, { method: 'DELETE', body: JSON.stringify({ reason }) });
+    closeDeleteModal();
+    loadApplications();
+    loadSummary();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
+}
+
+loadSummary();
+loadApplications();
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Get a Quote | Nilecrest Holdings</title>
+<title>Careers | Nilecrest Holdings</title>
 <link rel="icon" href="assets/images/logo.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,7 +23,6 @@
     <a href="projects.html">Projects</a>
     <a href="fleet.html">Fleet</a>
     <a href="contact.html">Contact</a>
-    <a href="careers.html">Careers</a>
   </div>
   <button class="nav-toggle" id="navToggle" aria-label="Toggle menu"><span></span><span></span><span></span></button>
   <a href="quote.html"><button class="nav-cta">Get a Quote</button></a>
@@ -31,64 +30,72 @@
 
 <div class="page-header">
   <img src="assets/images/watermark-light.png" class="page-header-watermark" alt="">
-  <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span class="current">Get a Quote</span></div>
-  <h1>Tell us what you <em>need moved or built</em></h1>
-  <p>Fill in the details below and our team will respond within 24 hours with a quote and next steps.</p>
+  <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span class="current">Careers</span></div>
+  <h1>Build your career <em>with us</em></h1>
+  <p>We're always looking for skilled drivers, engineers, and operations talent across Construction, Transportation, and Logistics. Tell us about yourself below.</p>
 </div>
 
-<div class="section">
+<div class="section" style="max-width:720px;margin:0 auto;">
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px;">
+    <div style="background:#fff;border:0.5px solid #e2e6f0;border-radius:12px;padding:18px;text-align:center;">
+      <i class="ti ti-building-bridge-2" style="font-size:22px;color:#1B2A5E;" aria-hidden="true"></i>
+      <div style="font-weight:600;color:#1B2A5E;font-size:13.5px;margin-top:8px;">Construction</div>
+      <div style="font-size:12px;color:#64748b;margin-top:2px;">Engineers, foremen, tradespeople</div>
+    </div>
+    <div style="background:#fff;border:0.5px solid #e2e6f0;border-radius:12px;padding:18px;text-align:center;">
+      <i class="ti ti-truck" style="font-size:22px;color:#1B2A5E;" aria-hidden="true"></i>
+      <div style="font-weight:600;color:#1B2A5E;font-size:13.5px;margin-top:8px;">Transportation</div>
+      <div style="font-size:12px;color:#64748b;margin-top:2px;">Drivers, dispatchers, fleet crew</div>
+    </div>
+    <div style="background:#fff;border:0.5px solid #e2e6f0;border-radius:12px;padding:18px;text-align:center;">
+      <i class="ti ti-package" style="font-size:22px;color:#1B2A5E;" aria-hidden="true"></i>
+      <div style="font-weight:600;color:#1B2A5E;font-size:13.5px;margin-top:8px;">Logistics</div>
+      <div style="font-size:12px;color:#64748b;margin-top:2px;">Warehouse, freight, supply chain</div>
+    </div>
+  </div>
+
   <div id="formMsg" class="public-form-msg"></div>
 
-  <form class="public-form" id="quoteForm">
+  <form class="public-form" id="careersForm">
     <div class="public-form-row">
       <div class="public-form-group">
         <label class="public-form-label">Full Name *</label>
         <input type="text" class="public-form-input" id="fName" placeholder="e.g. James Kariuki" required>
       </div>
       <div class="public-form-group">
-        <label class="public-form-label">Company (optional)</label>
-        <input type="text" class="public-form-input" id="fCompany" placeholder="e.g. Kenya Breweries Ltd">
+        <label class="public-form-label">Email Address *</label>
+        <input type="email" class="public-form-input" id="fEmail" placeholder="you@email.com" required>
       </div>
     </div>
     <div class="public-form-row">
-      <div class="public-form-group">
-        <label class="public-form-label">Email Address *</label>
-        <input type="email" class="public-form-input" id="fEmail" placeholder="you@company.com" required>
-      </div>
       <div class="public-form-group">
         <label class="public-form-label">Phone Number</label>
         <input type="text" class="public-form-input" id="fPhone" placeholder="+254 ...">
       </div>
-    </div>
-    <div class="public-form-group">
-      <label class="public-form-label">Service Needed *</label>
-      <select class="public-form-input" id="fService" required>
-        <option value="">Select a service</option>
-        <option value="Logistics">Logistics &amp; Freight</option>
-        <option value="Transport">Transport Solutions</option>
-        <option value="Construction">Civil Construction</option>
-      </select>
-    </div>
-    <div class="public-form-row">
       <div class="public-form-group">
-        <label class="public-form-label">Pickup / Origin (if applicable)</label>
-        <input type="text" class="public-form-input" id="fOrigin" placeholder="e.g. Mombasa">
-      </div>
-      <div class="public-form-group">
-        <label class="public-form-label">Destination (if applicable)</label>
-        <input type="text" class="public-form-input" id="fDestination" placeholder="e.g. Nairobi">
+        <label class="public-form-label">Department</label>
+        <select class="public-form-input" id="fDepartment">
+          <option value="">Select a department</option>
+          <option value="construction">Construction</option>
+          <option value="transportation">Transportation</option>
+          <option value="logistics">Logistics</option>
+        </select>
       </div>
     </div>
     <div class="public-form-group">
-      <label class="public-form-label">Tell us about the job *</label>
-      <textarea class="public-form-input" id="fDescription" rows="4" placeholder="Describe the scope, timelines, quantities, or anything else we should know." required></textarea>
+      <label class="public-form-label">Position You're Applying For *</label>
+      <input type="text" class="public-form-input" id="fPosition" placeholder="e.g. Heavy Truck Driver, Site Engineer, Warehouse Supervisor" required>
     </div>
     <div class="public-form-group">
-      <label class="public-form-label">Attach drawings, BOQ, or plans (optional)</label>
-      <input type="file" class="public-form-input" id="fAttachment" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp">
+      <label class="public-form-label">Cover Message (optional)</label>
+      <textarea class="public-form-input" id="fCover" rows="4" placeholder="Tell us about your experience and why you'd be a good fit."></textarea>
+    </div>
+    <div class="public-form-group">
+      <label class="public-form-label">Attach your CV (optional)</label>
+      <input type="file" class="public-form-input" id="fCv" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp">
       <div style="font-size:11.5px;color:#94a3b8;margin-top:4px;">PDF, Word, or image files up to 4MB.</div>
     </div>
-    <button type="submit" class="public-form-submit" id="submitBtn"><i class="ti ti-send" aria-hidden="true"></i> Submit Quote Request</button>
+    <button type="submit" class="public-form-submit" id="submitBtn"><i class="ti ti-send" aria-hidden="true"></i> Submit Application</button>
   </form>
 </div>
 
@@ -125,12 +132,12 @@
 </div>
 
 <script>
-document.getElementById('quoteForm').addEventListener('submit', async (e) => {
+document.getElementById('careersForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const msg = document.getElementById('formMsg');
   const btn = document.getElementById('submitBtn');
 
-  const fileInput = document.getElementById('fAttachment');
+  const fileInput = document.getElementById('fCv');
   const file = fileInput.files[0];
   if (file && file.size > 4 * 1024 * 1024) {
     msg.className = 'public-form-msg error';
@@ -140,21 +147,19 @@ document.getElementById('quoteForm').addEventListener('submit', async (e) => {
   }
 
   const formData = new FormData();
-  formData.append('client_name', document.getElementById('fName').value.trim());
-  formData.append('company', document.getElementById('fCompany').value.trim());
-  formData.append('client_email', document.getElementById('fEmail').value.trim());
-  formData.append('client_phone', document.getElementById('fPhone').value.trim());
-  formData.append('service_type', document.getElementById('fService').value);
-  formData.append('origin', document.getElementById('fOrigin').value.trim());
-  formData.append('destination', document.getElementById('fDestination').value.trim());
-  formData.append('description', document.getElementById('fDescription').value.trim());
-  if (file) formData.append('attachment', file);
+  formData.append('full_name', document.getElementById('fName').value.trim());
+  formData.append('email', document.getElementById('fEmail').value.trim());
+  formData.append('phone', document.getElementById('fPhone').value.trim());
+  formData.append('department', document.getElementById('fDepartment').value);
+  formData.append('position_title', document.getElementById('fPosition').value.trim());
+  formData.append('cover_message', document.getElementById('fCover').value.trim());
+  if (file) formData.append('cv', file);
 
   btn.disabled = true;
   btn.innerHTML = '<i class="ti ti-loader-2" aria-hidden="true"></i> Submitting...';
 
   try {
-    const res = await fetch('/api/quotes/public', {
+    const res = await fetch('/api/job-applications/public', {
       method: 'POST',
       body: formData,
     });
@@ -163,9 +168,9 @@ document.getElementById('quoteForm').addEventListener('submit', async (e) => {
     if (!res.ok) throw new Error(data.error || 'Something went wrong. Please try again.');
 
     msg.className = 'public-form-msg success';
-    msg.innerHTML = `<i class="ti ti-circle-check" aria-hidden="true"></i> Thank you! Your request <strong>${data.ref_number}</strong> has been received. We'll be in touch within 24 hours.`;
+    msg.innerHTML = `<i class="ti ti-circle-check" aria-hidden="true"></i> Thank you! Your application <strong>${data.ref_number}</strong> has been received. Our team will review it and reach out if there's a fit.`;
     msg.style.display = 'flex';
-    document.getElementById('quoteForm').reset();
+    document.getElementById('careersForm').reset();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (err) {
     msg.className = 'public-form-msg error';
@@ -173,7 +178,7 @@ document.getElementById('quoteForm').addEventListener('submit', async (e) => {
     msg.style.display = 'flex';
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '<i class="ti ti-send" aria-hidden="true"></i> Submit Quote Request';
+    btn.innerHTML = '<i class="ti ti-send" aria-hidden="true"></i> Submit Application';
   }
 });
 </script>

@@ -390,6 +390,7 @@ async function viewQuote(id) {
       <div class="detail-field"><div class="detail-label">Service</div><div class="detail-value">${escapeHtml(quote.service_type)}</div></div>
       <div class="detail-field"><div class="detail-label">Estimated value</div><div class="detail-value">${formatMoney(quote.estimated_value)}</div></div>
       <div class="detail-field" style="grid-column:1/-1;"><div class="detail-label">Description</div><div class="detail-value">${escapeHtml(quote.description || '-')}</div></div>
+      <div class="detail-field" style="grid-column:1/-1;"><div class="detail-label">Attachment</div><div class="detail-value">${quote.file_path ? `<a href="${escapeHtml(quote.file_path)}" target="_blank" rel="noopener"><i class="ti ti-paperclip"></i> View attached file</a>` : 'No file attached'}</div></div>
     </div>
     <div class="detail-label" style="margin-bottom:8px;">History</div>
     ${history.length ? history.map(h => `
