@@ -102,12 +102,23 @@
       <div class="form-group"><label class="form-label">Destination</label><input type="text" class="form-input" id="fDestination" placeholder="e.g. JKIA"></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Assigned Driver</label><input type="text" class="form-input" id="fDriver" placeholder="Driver full name"></div>
-      <div class="form-group"><label class="form-label">Vehicle Reg</label><input type="text" class="form-input" id="fVehicleReg" placeholder="e.g. KBZ 456B"></div>
-    </div>
-    <div class="form-row">
       <div class="form-group"><label class="form-label">Departure</label><input type="datetime-local" class="form-input" id="fDeparture"></div>
       <div class="form-group"><label class="form-label">Expected Arrival</label><input type="datetime-local" class="form-input" id="fArrival"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Assigned Driver</label>
+        <select class="form-input" id="fDriver">
+          <option value="">Select a driver</option>
+        </select>
+        <div style="font-size:11px;color:var(--text-3);margin-top:3px;">Set departure/arrival above to see who's free during that window.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Vehicle</label>
+        <select class="form-input" id="fVehicleSelect">
+          <option value="">Select a vehicle</option>
+        </select>
+      </div>
     </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Passenger Count</label><input type="number" class="form-input" id="fPax" min="0" value="0"></div>
@@ -265,12 +276,13 @@ function changePage(dir) { currentPage = Math.max(1, currentPage + dir); loadTri
 function openModal() {
   document.getElementById('modalTitle').textContent = 'New Trip';
   document.getElementById('tripId').value = '';
-  ['fClientName','fRoute','fOrigin','fDestination','fDriver','fVehicleReg','fNotes'].forEach(id => document.getElementById(id).value = '');
+  ['fClientName','fRoute','fOrigin','fDestination','fNotes'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('fDeparture').value = '';
   document.getElementById('fArrival').value = '';
   document.getElementById('fPax').value = '0';
   document.getElementById('fTripType').value = 'one_off';
   document.getElementById('fStatus').value = 'Scheduled';
+  refreshAvailability(); // populates dropdowns with all active drivers/vehicles since no time is set yet
   document.getElementById('modalOverlay').classList.add('show');
   document.getElementById('modal').classList.add('show');
 }
@@ -279,6 +291,48 @@ function closeModal() {
   document.getElementById('modalOverlay').classList.remove('show');
   document.getElementById('modal').classList.remove('show');
 }
+
+// Re-fetches available drivers/vehicles for the currently selected time
+// window, and re-populates both dropdowns. Called whenever departure/arrival
+// change, and when opening the modal. selectedDriverId/selectedVehicleId let
+// editTrip() pre-select the trip's current driver/vehicle even if, strictly
+// speaking, they're "busy" with this exact trip (excluded via exclude_trip_id).
+async function refreshAvailability(selectedDriverId = '', selectedVehicleId = '') {
+  const departure = document.getElementById('fDeparture').value;
+  const arrival = document.getElementById('fArrival').value;
+  const tripId = document.getElementById('tripId').value;
+
+  const params = new URLSearchParams();
+  if (departure) params.set('departure_time', departure);
+  if (arrival) params.set('arrival_time', arrival);
+  if (tripId) params.set('exclude_trip_id', tripId);
+
+  try {
+    const [driversRes, vehiclesRes] = await Promise.all([
+      api(`/drivers/available?${params.toString()}`),
+      api(`/fleet/available?${params.toString()}`),
+    ]);
+
+    const driverSelect = document.getElementById('fDriver');
+    driverSelect.innerHTML = '<option value="">Select a driver</option>' +
+      driversRes.rows.map(d => `<option value="${d.id}">${escapeHtml(d.full_name)}${d.phone ? ' -- ' + escapeHtml(d.phone) : ''}</option>`).join('');
+    if (selectedDriverId) driverSelect.value = selectedDriverId;
+
+    const vehicleSelect = document.getElementById('fVehicleSelect');
+    vehicleSelect.innerHTML = '<option value="">Select a vehicle</option>' +
+      vehiclesRes.rows.map(v => `<option value="${v.id}" data-reg="${escapeHtml(v.reg_number)}">${escapeHtml(v.reg_number)} -- ${escapeHtml(v.make_model || v.vehicle_type || '')}</option>`).join('');
+    if (selectedVehicleId) vehicleSelect.value = selectedVehicleId;
+  } catch {
+    // Non-critical -- dropdowns just stay empty if this fails, staff can retry
+  }
+}
+
+['fDeparture','fArrival'].forEach(id => {
+  document.getElementById(id).addEventListener('change', () => refreshAvailability(
+    document.getElementById('fDriver').value,
+    document.getElementById('fVehicleSelect').value
+  ));
+});
 
 async function editTrip(id) {
   const t = await api(`/trips/${id}`);
@@ -289,27 +343,30 @@ async function editTrip(id) {
   document.getElementById('fRoute').value      = t.route || '';
   document.getElementById('fOrigin').value     = t.origin || '';
   document.getElementById('fDestination').value = t.destination || '';
-  document.getElementById('fDriver').value     = t.assigned_driver || '';
-  document.getElementById('fVehicleReg').value = t.vehicle_reg || '';
   document.getElementById('fDeparture').value  = t.departure_time ? t.departure_time.slice(0,16) : '';
   document.getElementById('fArrival').value    = t.arrival_time ? t.arrival_time.slice(0,16) : '';
   document.getElementById('fPax').value        = t.passenger_count || 0;
   document.getElementById('fStatus').value     = t.status;
   document.getElementById('fNotes').value      = t.notes || '';
+  await refreshAvailability(t.driver_id || '', t.fleet_id || '');
   document.getElementById('modalOverlay').classList.add('show');
   document.getElementById('modal').classList.add('show');
 }
 
 document.getElementById('saveBtn').addEventListener('click', async () => {
   const id = document.getElementById('tripId').value;
+  const vehicleSelect = document.getElementById('fVehicleSelect');
+  const selectedVehicleOption = vehicleSelect.options[vehicleSelect.selectedIndex];
+
   const payload = {
     client_name:     document.getElementById('fClientName').value,
     trip_type:       document.getElementById('fTripType').value,
     route:           document.getElementById('fRoute').value,
     origin:          document.getElementById('fOrigin').value,
     destination:     document.getElementById('fDestination').value,
-    assigned_driver: document.getElementById('fDriver').value,
-    vehicle_reg:     document.getElementById('fVehicleReg').value,
+    driver_id:       document.getElementById('fDriver').value || null,
+    fleet_id:        vehicleSelect.value || null,
+    vehicle_reg:     selectedVehicleOption ? (selectedVehicleOption.dataset.reg || '') : '',
     departure_time:  document.getElementById('fDeparture').value || null,
     arrival_time:    document.getElementById('fArrival').value || null,
     passenger_count: parseInt(document.getElementById('fPax').value) || 0,
@@ -338,7 +395,7 @@ async function viewTrip(id) {
     ['Destination', t.destination || '-'],
     ['Type',        typeLabel[t.trip_type] || t.trip_type],
     ['Vehicle',     t.vehicle_reg || t.vehicle_reg_num || '-'],
-    ['Driver',      t.assigned_driver || '-'],
+    ['Driver',      t.driver_name || t.assigned_driver || '-'],
     ['Departure',   t.departure_time ? fmtDateTime(t.departure_time) : '-'],
     ['Arrival',     t.arrival_time ? fmtDateTime(t.arrival_time) : '-'],
     ['Passengers',  t.passenger_count || 0],

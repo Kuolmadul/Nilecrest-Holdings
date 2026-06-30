@@ -74,7 +74,12 @@
     </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Make &amp; Model</label><input type="text" class="form-input" id="fMakeModel" placeholder="e.g. Hino 500"></div>
-      <div class="form-group"><label class="form-label">Assigned Driver</label><input type="text" class="form-input" id="fDriver" placeholder="Full name"></div>
+      <div class="form-group">
+        <label class="form-label">Assigned Driver</label>
+        <select class="form-input" id="fDriver">
+          <option value="">Unassigned</option>
+        </select>
+      </div>
     </div>
     <div class="form-row">
       <div class="form-group">
@@ -189,7 +194,7 @@ function renderVehicleCard(v) {
       </div>
       <div class="vehicle-reg">${escapeHtml(v.reg_number)}</div>
       <div class="vehicle-type">${escapeHtml(v.vehicle_type || '')} ${v.make_model ? '&mdash; ' + escapeHtml(v.make_model) : ''}</div>
-      <div class="vehicle-detail"><i class="ti ti-user"></i> ${escapeHtml(v.assigned_driver || 'Unassigned')}</div>
+      <div class="vehicle-detail"><i class="ti ti-user"></i> ${escapeHtml(v.driver_name || 'Unassigned')}</div>
       <div class="vehicle-detail"><i class="ti ti-map-pin"></i> ${escapeHtml(v.current_location || '-')}</div>
       <div class="vehicle-actions">
         <button class="action-btn" title="View" onclick="viewVehicle(${v.id})"><i class="ti ti-eye"></i></button>
@@ -246,16 +251,33 @@ function openModal() {
   document.getElementById('modalTitle').textContent = `Add ${deptCfg.fleetLabel.replace(/s$/, '')}`;
   document.getElementById('vehicleId').value = '';
   document.getElementById('editReasonGroup').style.display = 'none';
-  ['fReg','fMakeModel','fDriver','fLocation'].forEach(id => document.getElementById(id).value = '');
+  ['fReg','fMakeModel','fLocation'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('fType').value = 'Heavy Truck';
   document.getElementById('fStatus').value = 'standby';
   renderSpecFields();
+  populateDriverDropdown();
   document.getElementById('modalOverlay').classList.add('show');
   document.getElementById('modal').classList.add('show');
 }
 function closeModal() {
   document.getElementById('modalOverlay').classList.remove('show');
   document.getElementById('modal').classList.remove('show');
+}
+
+// Loads all active drivers into the Assigned Driver dropdown. Unlike trip
+// scheduling, this isn't time-window-scoped -- it's a vehicle's default/
+// primary driver, so all active drivers are valid options regardless of
+// whether they're out on a trip right now.
+async function populateDriverDropdown(selectedDriverId = '') {
+  try {
+    const { rows } = await api('/drivers?status=active');
+    const select = document.getElementById('fDriver');
+    select.innerHTML = '<option value="">Unassigned</option>' +
+      rows.map(d => `<option value="${d.id}">${escapeHtml(d.full_name)}${d.phone ? ' -- ' + escapeHtml(d.phone) : ''}</option>`).join('');
+    if (selectedDriverId) select.value = selectedDriverId;
+  } catch {
+    // Non-critical -- dropdown just stays at "Unassigned" if this fails
+  }
 }
 
 async function editVehicle(id) {
@@ -266,10 +288,10 @@ async function editVehicle(id) {
   document.getElementById('fReg').disabled = true;
   document.getElementById('fType').value = vehicle.vehicle_type || 'Heavy Truck';
   document.getElementById('fMakeModel').value = vehicle.make_model || '';
-  document.getElementById('fDriver').value = vehicle.assigned_driver || '';
   document.getElementById('fStatus').value = vehicle.status;
   document.getElementById('fLocation').value = vehicle.current_location || '';
   renderSpecFields(vehicle.specs);
+  await populateDriverDropdown(vehicle.driver_id || '');
   document.getElementById('editReasonGroup').style.display = '';
   document.getElementById('fEditReason').value = '';
   document.getElementById('modalOverlay').classList.add('show');
@@ -281,7 +303,7 @@ document.getElementById('saveVehicleBtn').addEventListener('click', async () => 
   const payload = {
     vehicle_type: document.getElementById('fType').value,
     make_model: document.getElementById('fMakeModel').value,
-    assigned_driver: document.getElementById('fDriver').value,
+    driver_id: document.getElementById('fDriver').value || null,
     status: document.getElementById('fStatus').value,
     current_location: document.getElementById('fLocation').value,
     specs: collectSpecValues(),
@@ -312,7 +334,7 @@ async function viewVehicle(id) {
       <div class="detail-field"><div class="detail-label">Status</div><div class="detail-value"><span class="pill ${statusPill[vehicle.status]}">${statusLabel[vehicle.status]}</span></div></div>
       <div class="detail-field"><div class="detail-label">Type</div><div class="detail-value">${escapeHtml(vehicle.vehicle_type || '-')}</div></div>
       <div class="detail-field"><div class="detail-label">Make &amp; model</div><div class="detail-value">${escapeHtml(vehicle.make_model || '-')}</div></div>
-      <div class="detail-field"><div class="detail-label">Driver</div><div class="detail-value">${escapeHtml(vehicle.assigned_driver || 'Unassigned')}</div></div>
+      <div class="detail-field"><div class="detail-label">Driver</div><div class="detail-value">${escapeHtml(vehicle.driver_name || 'Unassigned')}</div></div>
       <div class="detail-field"><div class="detail-label">Location</div><div class="detail-value">${escapeHtml(vehicle.current_location || '-')}</div></div>
       ${deptCfg.fleetFields.map(f => `<div class="detail-field"><div class="detail-label">${escapeHtml(f.label)}</div><div class="detail-value">${escapeHtml((vehicle.specs || {})[f.key] || '-')}</div></div>`).join('')}
     </div>

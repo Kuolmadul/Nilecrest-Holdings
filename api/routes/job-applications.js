@@ -118,7 +118,29 @@ router.put('/:id', requireStaff, async (req, res) => {
       [status, review_notes, req.staff.id, req.params.id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Application not found' });
-    res.json(result.rows[0]);
+    const application = result.rows[0];
+
+    // Auto-create a driver record when a Transportation-department hire is
+    // marked Hired, so they immediately show up in the driver dropdown when
+    // scheduling trips -- no separate manual data entry required. Scoped to
+    // Transportation only, since not every hire across the company is a
+    // driver (e.g. site engineers, warehouse staff).
+    if (status === 'Hired') {
+      const deptCheck = await pool.query(
+        `SELECT d.slug FROM departments d WHERE d.id = $1`,
+        [application.department_id]
+      );
+      if (deptCheck.rows[0]?.slug === 'transportation') {
+        await pool.query(
+          `INSERT INTO drivers (full_name, phone, email, job_application_id, status)
+           VALUES ($1,$2,$3,$4,'active')
+           ON CONFLICT (job_application_id) DO NOTHING`,
+          [application.full_name, application.phone, application.email, application.id]
+        );
+      }
+    }
+
+    res.json(application);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to update application' });

@@ -14,6 +14,8 @@ function renderSidebar(activePage) {
     ...(isAdmin || deptSlug === 'logistics' ? [{ key: 'shipments', href: 'shipments.html', icon: 'ti-package', label: 'Shipments' }] : []),
     // Trips: show for transportation dept or admin
     ...(isAdmin || deptSlug === 'transportation' ? [{ key: 'trips', href: 'trips.html', icon: 'ti-route', label: 'Trips / Schedule' }] : []),
+    // Drivers: show for transportation dept or admin
+    ...(isAdmin || deptSlug === 'transportation' ? [{ key: 'drivers', href: 'drivers.html', icon: 'ti-steering-wheel', label: 'Drivers' }] : []),
     { key: 'fleet',     href: 'fleet.html',     icon: cfg.icon || 'ti-truck',      label: cfg.fleetLabel || 'Fleet' },
     { key: 'invoices',  href: 'invoices.html',  icon: 'ti-receipt',               label: 'Invoices' },
     { key: 'clients',   href: 'clients.html',   icon: 'ti-users',                 label: 'Clients' },

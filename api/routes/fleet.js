@@ -10,22 +10,25 @@ router.get('/', requireStaff, async (req, res) => {
   const { page = 1, limit = 6, status = '', type = '' } = req.query;
   const offset = (Number(page) - 1) * Number(limit);
 
-  const conditions = ['is_deleted = FALSE'];
+  const conditions = ['f.is_deleted = FALSE'];
   const params = [];
   // Managers only see their own department's fleet; admin sees everything.
   if (req.staff.role !== 'admin' && req.staff.department_id) {
     params.push(req.staff.department_id);
-    conditions.push(`department_id = $${params.length}`);
+    conditions.push(`f.department_id = $${params.length}`);
   }
-  if (status) { params.push(status); conditions.push(`status = $${params.length}`); }
-  if (type) { params.push(type); conditions.push(`vehicle_type = $${params.length}`); }
+  if (status) { params.push(status); conditions.push(`f.status = $${params.length}`); }
+  if (type) { params.push(type); conditions.push(`f.vehicle_type = $${params.length}`); }
   const whereClause = `WHERE ${conditions.join(' AND ')}`;
 
   try {
-    const countResult = await pool.query(`SELECT COUNT(*) FROM fleet ${whereClause}`, params);
+    const countResult = await pool.query(`SELECT COUNT(*) FROM fleet f ${whereClause}`, params);
     params.push(limit, offset);
     const rowsResult = await pool.query(
-      `SELECT * FROM fleet ${whereClause} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      `SELECT f.*, d.full_name AS driver_name, d.phone AS driver_phone
+       FROM fleet f LEFT JOIN drivers d ON d.id = f.driver_id
+       ${whereClause}
+       ORDER BY f.created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params
     );
     res.json({ total: Number(countResult.rows[0].count), rows: rowsResult.rows });
@@ -103,10 +106,62 @@ router.get('/public', async (req, res) => {
   }
 });
 
+// ---------- STAFF: vehicles available for a given trip time window ----------
+// GET /api/fleet/available?departure_time=...&arrival_time=...&exclude_trip_id=5
+// Excludes vehicles under maintenance/out of service, and vehicles already
+// booked on another trip whose time window overlaps the requested one.
+// Respects the same department scoping as the main fleet list.
+router.get('/available', requireStaff, async (req, res) => {
+  const { departure_time, arrival_time, exclude_trip_id } = req.query;
+  try {
+    const conditions = [`f.is_deleted = FALSE`, `f.status NOT IN ('maintenance','out_of_service')`];
+    const params = [];
+    if (req.staff.role !== 'admin' && req.staff.department_id) {
+      params.push(req.staff.department_id);
+      conditions.push(`f.department_id = $${params.length}`);
+    }
+
+    let busyQuery = `
+      SELECT DISTINCT fleet_id FROM trips
+      WHERE is_deleted = FALSE AND fleet_id IS NOT NULL
+        AND status IN ('Scheduled','In Progress')`;
+    const busyParams = [];
+    if (departure_time && arrival_time) {
+      busyParams.push(arrival_time, departure_time);
+      busyQuery += ` AND departure_time < $1 AND COALESCE(arrival_time, departure_time) > $2`;
+    }
+    if (exclude_trip_id) {
+      busyParams.push(exclude_trip_id);
+      busyQuery += ` AND id != $${busyParams.length}`;
+    }
+
+    const busyResult = await pool.query(busyQuery, busyParams);
+    const busyIds = busyResult.rows.map(r => r.fleet_id);
+    if (busyIds.length) {
+      params.push(busyIds);
+      conditions.push(`f.id != ALL($${params.length})`);
+    }
+
+    const result = await pool.query(
+      `SELECT f.* FROM fleet f WHERE ${conditions.join(' AND ')} ORDER BY f.reg_number ASC`,
+      params
+    );
+    res.json({ rows: result.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch available vehicles' });
+  }
+});
+
 // ---------- VIEW single vehicle + history ----------
 router.get('/:id', requireStaff, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM fleet WHERE id = $1', [req.params.id]);
+    const result = await pool.query(
+      `SELECT f.*, d.full_name AS driver_name, d.phone AS driver_phone
+       FROM fleet f LEFT JOIN drivers d ON d.id = f.driver_id
+       WHERE f.id = $1`,
+      [req.params.id]
+    );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Vehicle not found' });
 
     const history = await pool.query(

@@ -62,6 +62,7 @@ app.use('/api/trips',     require('./api/routes/trips'));
 app.use('/api/fuel',      require('./api/routes/fuel'));
 app.use('/api/mpesa',     require('./api/routes/mpesa'));
 app.use('/api/job-applications', require('./api/routes/job-applications'));
+app.use('/api/drivers', require('./api/routes/drivers'));
 
 // Export the app so Vercel can run it as a serverless function.
 module.exports = app;
